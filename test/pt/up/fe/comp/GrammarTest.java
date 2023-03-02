@@ -19,7 +19,7 @@ public class GrammarTest {
 
 
     private static final String IMPORT = "importDeclaration";
-    private static final String MAIN_METHOD = "classDeclaration";
+    private static final String MAIN_METHOD = "methodDeclaration";
     private static final String INSTANCE_METHOD = "methodDeclaration";
     private static final String STATEMENT = "statement";
     private static final String EXPRESSION = "expression";
@@ -187,7 +187,7 @@ public class GrammarTest {
 
     @Test
     public void testExprMult() {
-        TestUtils.parseVerbose("2 * 3", EXPRESSION);
+        TestUtils.parseVerbose("(2 * 3)+2", EXPRESSION);
     }
 
     @Test
