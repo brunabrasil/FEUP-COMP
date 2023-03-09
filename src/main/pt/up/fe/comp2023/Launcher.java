@@ -41,6 +41,10 @@ public class Launcher {
         TestUtils.noErrors(parserResult.getReports());
 
         // ... add remaining stages
+        JmmAnalyser analyser= new JmmAnalyser();
+
+        analyser.semanticAnalysis(parserResult);
+
     }
 
     private static Map<String, String> parseArgs(String[] args) {

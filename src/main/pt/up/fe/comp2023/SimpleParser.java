@@ -28,7 +28,7 @@ import java.util.Map;
  * specific language governing permissions and limitations under the License. under the License.
  */
 
-public class SimpleParser implements JmmParser {
+public class    SimpleParser implements JmmParser {
 
     @Override
     public String getDefaultRule() {
