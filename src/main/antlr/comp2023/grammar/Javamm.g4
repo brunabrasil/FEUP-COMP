@@ -15,22 +15,22 @@ program
     ;
 
 importDeclaration
-    : 'import' ID ('.' ID)* ';'
+    : 'import' ID ('.' ID)* ';' #Import
     ;
 
 classDeclaration
-    : 'class' ID ( 'extends' ID )? '{' ( varDeclaration )* ( methodDeclaration )* '}'
+    : 'class' ID ( 'extends' ID )? '{' ( varDeclaration )* ( methodDeclaration )* '}' #Class
     ;
 
 varDeclaration
-    : type ID ';'
+    : type value=ID ';' #varDeclaration
     ;
 
 methodDeclaration
-    : ('public')? type ID '(' ( type ID ( ',' type ID )* )? ')'
-      '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}'
+    : ('public')? type name=ID '(' ( type parameter=ID ( ',' type parameter=ID )* )? ')'
+      '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}' #Method
     | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')'
-      '{' ( varDeclaration )* ( statement )* '}'
+      '{' ( varDeclaration )* ( statement )* '}' #Method
     ;
 
 type
@@ -41,30 +41,29 @@ type
     | ID
     ;
 statement
-    : '{' ( statement )* '}'
-    | 'if' '(' expression ')' statement 'else' statement
-    | 'while' '(' expression ')' statement
-    | expression ';'
-    | ID '=' expression ';'
-    | ID '[' expression ']' '=' expression ';'
+    : '{' ( statement )* '}' #Stmt
+    | 'if' '(' expression ')' statement 'else' statement #IfElseStmt
+    | 'while' '(' expression ')' statement #WhileStmt
+    | expression ';' #Expr
+    | var=ID '=' expression ';' #Assignment
+    | var=ID '[' expression ']' '=' expression ';' #Assignment
     ;
 
 expression
-    : '(' expression ')'
-    | '!' expression
-    | expression ( '*' | '/' ) expression
-    | expression ( '+' | '-' ) expression
-    | expression ('<') expression
-    | expression ('&&') expression
-    | expression '[' expression ']'
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-
-    | INT
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
+    : '(' expression ')' #Parenthesis
+    | expression '[' expression ']' #Index
+    | expression '.' op='length' #Length
+    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #CallMethod
+    | op='!' expression #Unary
+    | expression op=( '*' | '/' ) expression #BinaryOp
+    | expression op=( '+' | '-' ) expression #BinaryOp
+    | expression op='<' expression #BinaryOp
+    | expression op='&&' expression #BinaryOp
+    | 'new' 'int' '[' expression ']' #Instantiation
+    | 'new' ID '(' ')' #Instantiation
+    | value=INT #Integer
+    | value='true' #Boolean
+    | value='false' #Boolean
+    | value=ID #Identifier
+    | value='this' #This
     ;
