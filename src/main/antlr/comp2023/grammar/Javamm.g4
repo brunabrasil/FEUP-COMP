@@ -15,30 +15,30 @@ program
     ;
 
 importDeclaration
-    : 'import' ID ('.' ID)* ';' #Import
+    : 'import' importName=ID ('.' vars+=ID)* ';' #Import
     ;
 
 classDeclaration
-    : 'class' ID ( 'extends' ID )? '{' ( varDeclaration )* ( methodDeclaration )* '}' #Class
+    : 'class' className=ID ( 'extends' extendsName=ID )? '{' ( varDeclaration )* ( methodDeclaration )* '}' #Class
     ;
 
 varDeclaration
-    : type value=ID ';' #varDeclaration
+    : type varName=ID ';' #Declaration
     ;
 
 methodDeclaration
-    : ('public')? type name=ID '(' ( type parameter=ID ( ',' type parameter=ID )* )? ')'
-      '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}' #Method
+    : ('public')? type methodName=ID '(' ( type parameters+=ID ( ',' type parameters+=ID )* )? ')'
+      '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}' #NormalMethod
     | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')'
-      '{' ( varDeclaration )* ( statement )* '}' #Method
+      '{' ( varDeclaration )* ( statement )* '}' #StaticMethod
     ;
 
 type
-    : 'int' '[' ']'
-    | 'boolean'
-    | 'int'
-    | 'String'
-    | ID
+    : name='int' '[' ']'
+    | name='boolean'
+    | name='int'
+    | name='String'
+    | name=ID
     ;
 statement
     : '{' ( statement )* '}' #Stmt

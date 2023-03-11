@@ -10,32 +10,49 @@ import java.util.*;
 
 public class JmmSymbolTable implements SymbolTable {
     private final List<String> imports = new ArrayList<>();
+    private String className;
+    private String superName;
+    private List<Symbol> fields;
+    private List<String> methods;
+    private List<Symbol> parameters;
+    private List<Symbol> localVariables;
 
 
-
+    public void addImport(String importState){
+        imports.add(importState);
+    }
     @Override
     public List<String> getImports() {
-        return null;
+        return imports;
     }
 
+    public void setClassName(String name){
+        this.className=name;
+    }
     @Override
     public String getClassName() {
-        return null;
+        return className;
     }
 
+    public void setSuperName(String name){
+        this.superName=name;
+    }
     @Override
     public String getSuper() {
-        return null;
+        return superName;
     }
 
+    public void addField(Symbol field){
+        this.fields.add(field);
+    }
     @Override
     public List<Symbol> getFields() {
-        return null;
+        return fields;
     }
 
     @Override
     public List<String> getMethods() {
-        return null;
+        return methods;
     }
 
     @Override
@@ -45,14 +62,17 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public List<Symbol> getParameters(String s) {
-        return null;
+        return parameters;
     }
 
+    public void addLocalVariable(Symbol variable){
+        this.localVariables.add(variable);
+    }
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        return null;
+        return localVariables;
     }
 
-    public
+
 
 }
