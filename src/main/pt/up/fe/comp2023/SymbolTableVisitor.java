@@ -27,7 +27,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         addVisit("Class", this::dealWithClassDeclaration);
         addVisit("Declaration", this::dealWithVarDeclaration);
         addVisit("NormalMethod", this::dealWithNormalMethodDeclaration);
-        addVisit("StaticMethod", this::dealWithStaticMethodDeclaration);
+        addVisit("MainMethod", this::dealWithMainMethodDeclaration);
         addVisit("Type", this::dealWithType);
         addVisit("Stmt", this::dealWithStmt);
         addVisit("IfElseStmt", this::dealWithIfElseStmt);
@@ -79,18 +79,13 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
             }
         }
         table.addImport(ret);
-        return null;
-    }
-
-
-
-    private String dealWithMainDeclaration(JmmNode jmmNode, String s) {
-        return  null;
+        return "";
     }
 
     private String dealWithClassDeclaration(JmmNode jmmNode, String s) {
         String classname=jmmNode.get("className");
         table.setClassName(classname);
+        scope="CLASS";
 
         try {
             String supername= jmmNode.get("extendsName");
@@ -102,16 +97,77 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         for(JmmNode child : jmmNode.getChildren()){
             visit(child,"");
         }
-        scope="CLASS";
-        return  null;
+
+        return  "";
     }
+
+    private String dealWithMainMethodDeclaration(JmmNode jmmNode, String s) {
+        scope="METHOD";
+        String methodName = "main";
+        Type methodType=new Type("void",false);
+        table.addMethod(methodName,methodType);
+
+
+        List<Symbol> methodParam=new ArrayList<>();
+
+        // Getting parameters
+        var paramName=jmmNode.get("parameter");
+        Type paramType=new Type("String",true);
+        Symbol paramSymbol=new Symbol(paramType,paramName);
+        methodParam.add(paramSymbol);
+        table.addMethodParameters(methodName,methodParam);
+
+        // Getting localVariables
+        for(JmmNode child : jmmNode.getChildren()){
+            if(child.getKind().equals("Declaration")){
+                visit(child,"");
+            }
+        }
+        table.addLocalVariables(methodName);
+        return  "";
+    }
+
+
     private String dealWithNormalMethodDeclaration(JmmNode jmmNode, String s) {
+        scope="METHOD";
+        String methodName = jmmNode.get("methodName");
+        String typename=visit(jmmNode.getJmmChild(0));
+        Boolean isArray=typename.contains("[");
+        Type methodType=new Type(typename,isArray);
+        table.addMethod(methodName,methodType);
 
-        return  null;
-    }
-    private String dealWithStaticMethodDeclaration(JmmNode jmmNode, String s) {
+        List<Symbol> methodParams=new ArrayList<>();
 
-        return  null;
+        List<String> paramNames=(List<String>) jmmNode.getObject("parameters");
+        int i=0;
+        for(JmmNode child : jmmNode.getChildren()){
+            // Ignore the first "type"
+            if(i==0){
+                i++;
+                continue;
+            }
+            // Method Parameters
+            if(child.getKind().equals("type")){
+                String paramTypeName=visit(child,"");
+                Boolean paramIsArray=paramTypeName.contains("[");
+                Type paramType=new Type(paramTypeName,paramIsArray);
+                String paramName=paramNames.get(i-1);
+                Symbol paramSymbol=new Symbol(paramType,paramName);
+                methodParams.add(paramSymbol);
+            }
+            //
+            if(child.getKind().equals("Declaration")){
+                visit(child,"");
+            }
+        }
+
+        table.addLocalVariables(methodName);
+        table.addMethodParameters(methodName,methodParams);
+
+
+        return  "";
+
+
     }
     private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
         var typename=visit(jmmNode.getJmmChild(0),"");
@@ -122,7 +178,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         if(scope=="CLASS")
             table.addField(symbol);
         if(scope=="METHOD")
-            table.addLocalVariable(symbol);
+            table.addTempLocalVariable(symbol);
         return  null;
     }
 
