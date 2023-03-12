@@ -29,8 +29,8 @@ varDeclaration
 methodDeclaration
     : ('public')? type methodName=ID '(' ( type parameters+=ID ( ',' type parameters+=ID )* )? ')'
       '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}' #NormalMethod
-    | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')'
-      '{' ( varDeclaration )* ( statement )* '}' #StaticMethod
+    | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' parameter=ID ')'
+      '{' ( varDeclaration )* ( statement )* '}' #MainMethod
     ;
 
 type
@@ -51,10 +51,10 @@ statement
 
 expression
     : '(' expression ')' #Parenthesis
-    | expression '[' expression ']' #Index
+    | expression '[' expression ']' #Indexing
     | expression '.' op='length' #Length
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #CallMethod
-    | op='!' expression #Unary
+    | op='!' expression #UnaryOp
     | expression op=( '*' | '/' ) expression #BinaryOp
     | expression op=( '+' | '-' ) expression #BinaryOp
     | expression op='<' expression #BinaryOp
