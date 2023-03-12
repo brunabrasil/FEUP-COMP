@@ -53,14 +53,14 @@ expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #Indexing
     | expression '.' op='length' #Length
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #CallMethod
+    | expression '.' name=ID '(' ( expression ( ',' expression )* )? ')' #CallMethod
     | op='!' expression #UnaryOp
     | expression op=( '*' | '/' ) expression #BinaryOp
     | expression op=( '+' | '-' ) expression #BinaryOp
     | expression op='<' expression #BinaryOp
     | expression op='&&' expression #BinaryOp
     | 'new' 'int' '[' expression ']' #Instantiation
-    | 'new' ID '(' ')' #Instantiation
+    | 'new' name=ID '(' ')' #Instantiation
     | value=INT #Integer
     | value='true' #Boolean
     | value='false' #Boolean
