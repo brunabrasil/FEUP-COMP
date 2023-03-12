@@ -16,9 +16,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
     public SymbolTableVisitor(JmmSymbolTable table, List<Report> reports) {
         this.table=table;
         this.reports=reports;
-
     }
-
 
     @Override
     protected void buildVisitor() {
@@ -29,7 +27,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         addVisit("NormalMethod", this::dealWithNormalMethodDeclaration);
         addVisit("MainMethod", this::dealWithMainMethodDeclaration);
         addVisit("Type", this::dealWithType);
-        addVisit("Stmt", this::dealWithStmt);
+        /*addVisit("Stmt", this::dealWithStmt);
         addVisit("IfElseStmt", this::dealWithIfElseStmt);
         addVisit("WhileStmt", this::dealWithWhileStmt);
         addVisit("Expr", this::dealWithExpr);
@@ -41,7 +39,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         addVisit("BinaryOp", this::dealWithVarDeclaration);
         addVisit("Instantiation", this::dealWithProgram );
         addVisit("Integer", this::dealWithProgram );
-        addVisit("This", this::dealWithProgram );
+        addVisit("This", this::dealWithProgram );*/
        // setDefaultVisit(this::defaultVisit);
     }
 

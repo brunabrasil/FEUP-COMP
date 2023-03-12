@@ -59,9 +59,12 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public List<String> getMethods() {
-        List<String> methods;
+         List<String> methodsList=new ArrayList<>();
+        for ( String method : methods.keySet() ) {
+            methodsList.add(method);
+        }
 
-        return methods;
+        return methodsList;
     }
 
     @Override

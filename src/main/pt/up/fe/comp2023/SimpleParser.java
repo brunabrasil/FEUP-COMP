@@ -47,7 +47,6 @@ public class    SimpleParser implements JmmParser {
             var tokens = new CommonTokenStream(lex);
             // Transforms tokens into a parse tree
             var parser = new JavammParser(tokens);
-
             var result= AntlrParser.parse(lex, parser, startingRule).map(root -> new JmmParserResult(root, Collections.emptyList(), config));
 
             if (parser.getNumberOfSyntaxErrors() > 0){
