@@ -59,9 +59,8 @@ expression
     | expression '[' expression ']'
     | expression '.' 'length'
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
 
+    | 'new' ID '(' ')'
     | INT
     | 'true'
     | 'false'

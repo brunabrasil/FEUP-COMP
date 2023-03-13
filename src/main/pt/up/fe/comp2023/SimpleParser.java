@@ -42,17 +42,17 @@ public class SimpleParser implements JmmParser {
             // Convert code string into a character stream
             var input = new ANTLRInputStream(jmmCode);
             // Transform characters into tokens using the lexer
-            var lex = new JavammLexer(input);
+            var lex = new pt.up.fe.comp2023.JavammLexer(input);
             // Wrap lexer around a token stream
             var tokens = new CommonTokenStream(lex);
             // Transforms tokens into a parse tree
-            var parser = new JavammParser(tokens);
+            var parser = new pt.up.fe.comp2023.JavammParser(tokens);
 
             var result= AntlrParser.parse(lex, parser, startingRule).map(root -> new JmmParserResult(root, Collections.emptyList(), config));
 
             if (parser.getNumberOfSyntaxErrors() > 0){
-                return JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
-                        "There were syntax errors during parsing, terminating" ));
+                return JmmParserResult.newError(new Report(ReportType.ERROR, Stage.SYNTATIC, -1,
+                        "There were syntax " + parser.getNumberOfSyntaxErrors() + " errors during parsing, terminating" ));
             }
             else{
                 return result.get();
