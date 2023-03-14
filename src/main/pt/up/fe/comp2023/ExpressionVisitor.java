@@ -27,24 +27,29 @@ public class ExpressionVisitor extends AJmmVisitor<String,String > {
         addVisit("Unary", this::dealWithUnaryOp );
         addVisit("BinaryOp", this::dealWithBinOp);
         addVisit("Instantiation", this::dealWithInstantion);
-        addVisit("Integer", this::dealWith???);
-        addVisit("This", this::dealWith???? );
+        // addVisit("Integer", this::dealWith???);
+        // addVisit("This", this::dealWith???? );
 
     }
 
     private String dealWithUnaryOp(JmmNode jmmNode, String s) {
+        return "";
     }
 
     private String dealWithInstantion(JmmNode jmmNode, String s) {
+        return "";
     }
 
     private String dealWithBinOp(JmmNode jmmNode, String s) {
+        return "";
     }
 
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
+        return "";
     }
 
     private String dealWithCallMethod(JmmNode jmmNode, String s) {
+        return "";
     }
 
 
