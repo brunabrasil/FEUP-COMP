@@ -12,10 +12,10 @@ public class JmmSymbolTable implements SymbolTable {
     private final List<String> imports = new ArrayList<>();
     private String className;
     private String superName;
-    private List<Symbol> fields;
-    private List<Symbol> templocalvariables;
+    private List<Symbol> fields =new ArrayList<>();
+    private List<Symbol> templocalvariables=new ArrayList<>();
     private Map<String,Type> methods=new HashMap<>();
-    private List<Symbol> parameters;
+    private List<Symbol> parameters=new ArrayList<>();
    // private List<Symbol> localVariables;
     private Map<String,List<Symbol>> methodParameters=new HashMap<>();
     private Map<String,List<Symbol>> localVariables=new HashMap<>(); // Map<MethodName,Variables>
@@ -69,7 +69,7 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public Type getReturnType(String s) {
-        return null;
+        return this.methods.get(s);
     }
 
 
@@ -78,20 +78,26 @@ public class JmmSymbolTable implements SymbolTable {
     }
     @Override
     public List<Symbol> getParameters(String s) {
-        return methodParameters.get(s);
+        return this.methodParameters.get(s);
     }
-
 
     public void addTempLocalVariable(Symbol var){
+        System.out.println("IN TEMP LOCAL VARIABLES="+var);
         this.templocalvariables.add(var);
     }
+
     public void addLocalVariables(String methodname){
-        this.localVariables.put(methodname,templocalvariables);
+        List<Symbol> temp=new ArrayList<>();
+        for(var i : this.templocalvariables){
+            temp.add(i);
+        }
+        this.localVariables.put(methodname,temp);
         this.templocalvariables.clear();
     }
+
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        return localVariables.get(s);
+        return this.localVariables.get(s);
     }
 
 
