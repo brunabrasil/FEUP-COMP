@@ -240,4 +240,9 @@ public class GrammarTest {
         TestUtils.parseVerbose("1 && 2 < 3 + 4 - 5 * 6 / 7", EXPRESSION);
     }
 
+    @Test
+    public void testMethodVarsDcl() {
+        TestUtils.parseVerbose("public int[] all(int a, boolean b, MethodsAndFields maf){int[] c;return c;}",
+                INSTANCE_METHOD);
+    }
 }
