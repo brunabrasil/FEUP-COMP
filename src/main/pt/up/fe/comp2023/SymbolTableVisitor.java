@@ -27,20 +27,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         addVisit("NormalMethod", this::dealWithNormalMethodDeclaration);
         addVisit("MainMethod", this::dealWithMainMethodDeclaration);
         addVisit("Type", this::dealWithType);
-        /*addVisit("Stmt", this::dealWithStmt);
-        addVisit("IfElseStmt", this::dealWithIfElseStmt);
-        addVisit("WhileStmt", this::dealWithWhileStmt);
-        addVisit("Expr", this::dealWithExpr);
-        addVisit("Assignment", this::dealWithAssignment);
-        addVisit("Parenthesis", this::dealWithType);
-        addVisit("Index", this::dealWithIndex);
-        addVisit("CallMethod", this::dealWithVarDeclaration);
-        addVisit("Unary", this::dealWithProgram );
-        addVisit("BinaryOp", this::dealWithVarDeclaration);
-        addVisit("Instantiation", this::dealWithProgram );
-        addVisit("Integer", this::dealWithProgram );
-        addVisit("This", this::dealWithProgram );*/
-       // setDefaultVisit(this::defaultVisit);
+
     }
 
 
@@ -129,15 +116,17 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
     private String dealWithNormalMethodDeclaration(JmmNode jmmNode, String s) {
         scope="METHOD";
         String methodName = jmmNode.get("methodName");
-        String typename=visit(jmmNode.getJmmChild(0));
+        String typename=visit(jmmNode.getJmmChild(0),"");
         Boolean isArray=typename.contains("[");
+        if(isArray)
+            typename=typename.substring(0, typename.length() - 1);
         Type methodType=new Type(typename,isArray);
         table.addMethod(methodName,methodType);
 
         List<Symbol> methodParams=new ArrayList<>();
 
         List<String> paramNames=(List<String>) jmmNode.getObject("parameters");
-        int i=0;
+        var i=0;
         for(JmmNode child : jmmNode.getChildren()){
             // Ignore the first "type"
             if(i==0){
@@ -145,9 +134,11 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
                 continue;
             }
             // Method Parameters
-            if(child.getKind().equals("type")){
+            if(child.getKind().equals("Type")){
                 String paramTypeName=visit(child,"");
                 Boolean paramIsArray=paramTypeName.contains("[");
+                if(paramIsArray)
+                    paramTypeName=paramTypeName.substring(0, paramTypeName.length() - 1);
                 Type paramType=new Type(paramTypeName,paramIsArray);
                 String paramName=paramNames.get(i-1);
                 Symbol paramSymbol=new Symbol(paramType,paramName);
@@ -170,13 +161,19 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
     private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
         var typename=visit(jmmNode.getJmmChild(0),"");
         var isArray=typename.contains("[");
+        if(isArray)
+            typename=typename.substring(0, typename.length() - 1);
+        System.out.println(typename);
         var varname=jmmNode.get("varName");
         Type type=new Type(typename,isArray);
         Symbol symbol=new Symbol(type,varname);
         if(scope=="CLASS")
             table.addField(symbol);
-        if(scope=="METHOD")
+        if(scope=="METHOD"){
+            System.out.println("IN METHOD, SYMBOL="+symbol);
             table.addTempLocalVariable(symbol);
+        }
+
         return  null;
     }
 
@@ -198,6 +195,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
     }
     private String dealWithType(JmmNode jmmNode, String s) {
         var type=jmmNode.get("name");
+        var isArray=(Boolean) jmmNode.getObject("isArray");
+        if(isArray)
+            type+="[";
         return  type;
     }
 }

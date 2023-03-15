@@ -79,7 +79,10 @@ public class SymbolTableTest {
     	System.out.println("METHODS: "+methods);
     	for(var m :methods){
     		var ret = st.getReturnType(m);
+			System.out.println(ret);
     		var numParameters = st.getParameters(m).size();
+			System.out.println("PARAMETERS");
+			System.out.println(st.getParameters(m));
     		switch(ret.getName()) {
 	    		case "MethodsAndFields": 
 	    			checkObj++; 
@@ -92,6 +95,7 @@ public class SymbolTableTest {
 	    		case "int": 
 	    			if(ret.isArray()){
 	    				checkAll++;
+						System.out.println("IS ARRAY");
 	    				assertEquals("Method "+m+" parameters",3,numParameters);
 	    			}else {
 	    				checkInt++;
@@ -122,4 +126,17 @@ public class SymbolTableTest {
     	assertEquals("Parameter 2", "boolean", parameters.get(1).getType().getName());
     	assertEquals("Parameter 3", "Parameters", parameters.get(2).getType().getName());
     }
+	/*
+	@Test
+	public void LocalVariables() {
+		var semantics = test("symboltable/MethodsAndFields2.jmm",false);
+		var st = semantics.getSymbolTable();
+		var methods = st.getMethods();
+		assertEquals("Method Number",1, methods.size());
+		for(var m :methods){
+			System.out.println(m);
+			assertEquals("LocalVariables",1, st.getLocalVariables(m).size());
+		};
+
+	}*/
 }

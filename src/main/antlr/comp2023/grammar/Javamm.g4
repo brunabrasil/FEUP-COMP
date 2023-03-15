@@ -35,8 +35,8 @@ methodDeclaration
       '{' ( varDeclaration )* ( statement )* '}' #MainMethod
     ;
 
-type
-    : name='int' '[' ']'
+type locals [boolean isArray = false]
+    : name='int' ('['']'{$isArray = true;})?
     | name='boolean'
     | name='int'
     | name='String'
