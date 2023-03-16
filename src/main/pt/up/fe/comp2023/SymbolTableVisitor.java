@@ -26,7 +26,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         addVisit("Declaration", this::dealWithVarDeclaration);
         addVisit("NormalMethod", this::dealWithNormalMethodDeclaration);
         addVisit("MainMethod", this::dealWithMainMethodDeclaration);
-        addVisit("Type", this::dealWithType);
+        //addVisit("Type", this::dealWithType);
 
     }
 
@@ -116,11 +116,8 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
     private String dealWithNormalMethodDeclaration(JmmNode jmmNode, String s) {
         scope="METHOD";
         String methodName = jmmNode.get("methodName");
-        String typename=visit(jmmNode.getJmmChild(0),"");
-        Boolean isArray=typename.contains("[");
-        if(isArray)
-            typename=typename.substring(0, typename.length() - 1);
-        Type methodType=new Type(typename,isArray);
+
+        Type methodType=dealWithType(jmmNode.getJmmChild(0));
         table.addMethod(methodName,methodType);
 
         List<Symbol> methodParams=new ArrayList<>();
@@ -135,11 +132,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
             }
             // Method Parameters
             if(child.getKind().equals("Type")){
-                String paramTypeName=visit(child,"");
-                Boolean paramIsArray=paramTypeName.contains("[");
-                if(paramIsArray)
-                    paramTypeName=paramTypeName.substring(0, paramTypeName.length() - 1);
-                Type paramType=new Type(paramTypeName,paramIsArray);
+
+                Type paramType=dealWithType(child);
+
                 String paramName=paramNames.get(i-1);
                 Symbol paramSymbol=new Symbol(paramType,paramName);
                 methodParams.add(paramSymbol);
@@ -159,13 +154,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
 
     }
     private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
-        var typename=visit(jmmNode.getJmmChild(0),"");
-        var isArray=typename.contains("[");
-        if(isArray)
-            typename=typename.substring(0, typename.length() - 1);
-        System.out.println(typename);
+
         var varname=jmmNode.get("varName");
-        Type type=new Type(typename,isArray);
+        Type type=dealWithType(jmmNode.getJmmChild(0));
         Symbol symbol=new Symbol(type,varname);
         if(scope=="CLASS")
             table.addField(symbol);
@@ -193,11 +184,10 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         String ret= s+visit(jmmNode.getJmmChild(0), "")+";";
         return null;
     }
-    private String dealWithType(JmmNode jmmNode, String s) {
-        var type=jmmNode.get("name");
+    private Type dealWithType(JmmNode jmmNode) {
+        var typename=jmmNode.get("name");
         var isArray=(Boolean) jmmNode.getObject("isArray");
-        if(isArray)
-            type+="[";
+        Type type=new Type(typename,isArray);
         return  type;
     }
 }

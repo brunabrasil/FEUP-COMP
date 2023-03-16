@@ -241,6 +241,11 @@ public class GrammarTest {
     }
 
     @Test
+    public void testExprNegatePrecedure() {
+        TestUtils.parseVerbose("!a+b", EXPRESSION);
+    }
+
+    @Test
     public void testMethodVarsDcl() {
         TestUtils.parseVerbose("public int[] all(int a, boolean b, MethodsAndFields maf){int[] c;return c;}",
                 INSTANCE_METHOD);
