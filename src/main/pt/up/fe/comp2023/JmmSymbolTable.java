@@ -82,7 +82,7 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     public void addTempLocalVariable(Symbol var){
-        System.out.println("IN TEMP LOCAL VARIABLES="+var);
+        //System.out.println("IN TEMP LOCAL VARIABLES="+var);
         this.templocalvariables.add(var);
     }
 
