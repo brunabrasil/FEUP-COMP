@@ -54,7 +54,7 @@ statement
 expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #Indexing
-    | expression '.' op='length' #Length  /* Podemos apenas fazer op=ID */
+    | expression '.' op='length' #Length
     | expression '.' name=ID '(' ( expression ( ',' expression )* )? ')' #CallMethod
     | op='!' expression #UnaryOp
     | expression op=( '*' | '/' ) expression #BinaryOp
