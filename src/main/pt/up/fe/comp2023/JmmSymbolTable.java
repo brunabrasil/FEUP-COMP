@@ -67,6 +67,33 @@ public class JmmSymbolTable implements SymbolTable {
         return methodsList;
     }
 
+    public Boolean methodExists(String methodName, Type methodType, List<Symbol> parameters) {
+        // Check if the method name exists in the map
+        if (methods.containsKey(methodName)) {
+            // If it exists, check if the method type matches
+            if (methods.get(methodName).equals(methodType)) {
+                // If the method type matches, check if the parameters match
+                if (methodParameters.get(methodName).equals(parameters)) {
+                    // If the parameters match, return true
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public List<String> parametersToOllir(String methodName) {
+        List<String> ollir = new ArrayList<>();
+
+        var parameters = methodParameters.get(methodName);
+        for (var parameter : parameters) {
+            ollir.add(OllirTemplates.variableTemplate(parameter));
+        }
+
+        return ollir;
+    }
+
+
     @Override
     public Type getReturnType(String s) {
         return this.methods.get(s);
