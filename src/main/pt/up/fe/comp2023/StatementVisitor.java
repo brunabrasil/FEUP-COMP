@@ -85,7 +85,13 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         }
 
         //see if var is a local variable
-        List<Symbol> localVariables = table.getLocalVariables(parent.get("methodName"));
+        List<Symbol> localVariables;
+        if(parent.getKind().equals("NormalMethod")){
+            localVariables = table.getLocalVariables(parent.get("methodName"));
+        }
+        else{
+            localVariables = table.getLocalVariables("main");
+        }
         if(localVariables != null){
             for (int i = 0; i < localVariables.size(); i++){
                 if(localVariables.get(i).getName().equals(left)){

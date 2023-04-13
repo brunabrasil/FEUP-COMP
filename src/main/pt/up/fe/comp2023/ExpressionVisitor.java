@@ -104,7 +104,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
             if(fields != null){
                 for(Symbol field : fields) {
                     if(field.getName().equals(val)) {
-                        if (parent.getKind().equals("MainMethod")) { //ver istoo
+                        if (parent.getKind().equals("MainMethod")) { //ver istoo INUTILLL
                             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col,
                                     val + " is a field and can't be used in main method"));
                         }
@@ -112,8 +112,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
                     }
                 }
             }
-            System.out.println("val "+ val);
-            System.out.println("imports "+ table.getImports());
+
 
             if((table.getImports() == null || !table.getImports().contains(val))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Variable not declared"));
