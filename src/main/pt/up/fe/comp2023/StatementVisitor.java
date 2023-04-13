@@ -24,7 +24,7 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         addVisit("WhileStmt", this::dealWithWhileStmt);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Stmt", this::dealWithStmt);
-        addVisit("ArrayAssignment", this::dealWithArrayAssignment);
+        addVisit("AssignmentArray", this::dealWithAssignmentArray);
         addVisit("Expr", this::dealWithExpr);
     }
 
@@ -33,7 +33,7 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         return expressionVisitor.visit(jmmNode.getJmmChild(0), "");
     }
 
-    private Type dealWithArrayAssignment(JmmNode jmmNode, String s) {
+    private Type dealWithAssignmentArray(JmmNode jmmNode, String s) {
         return null;
     }
 
