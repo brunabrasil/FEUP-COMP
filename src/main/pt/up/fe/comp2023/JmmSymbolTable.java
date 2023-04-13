@@ -72,7 +72,6 @@ public class JmmSymbolTable implements SymbolTable {
         return this.methods.get(s);
     }
 
-
     public void addMethodParameters(String methodname,List<Symbol> params){
         this.methodParameters.put(methodname,params);
     }

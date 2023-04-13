@@ -26,23 +26,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         addVisit("Declaration", this::dealWithVarDeclaration);
         addVisit("NormalMethod", this::dealWithNormalMethodDeclaration);
         addVisit("MainMethod", this::dealWithMainMethodDeclaration);
-        //addVisit("Type", this::dealWithType);
 
     }
 
-
-
-    private String dealWithWhileStmt(JmmNode jmmNode, String s) {
-        return  null;
-    }
-
-    private String dealWithIfElseStmt(JmmNode jmmNode, String s) {
-        return  null;
-    }
-
-    private String dealWithStmt(JmmNode jmmNode, String s) {
-        return  null;
-    }
 
     private String dealWithProgram(JmmNode jmmNode, String s) {
         s =(s!= null ?s:"");
@@ -56,7 +42,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
     }
 
     private String dealWithImport(JmmNode jmmNode, String s){
-        String ret=s+"import "+jmmNode.get("importName");
+        String ret= jmmNode.get("importName");
         List<String> vars= (List<String>) jmmNode.getObject("vars");
         if (vars!=null) {
             for (String names : vars) {
@@ -168,10 +154,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         return  null;
     }
 
-    private String dealWithIndex(JmmNode jmmNode, String s) {
-        return  null;
-    }
-
     private String dealWithAssignment(JmmNode jmmNode, String s) {
 
         String ret= s+"int "+ jmmNode.get("var")
@@ -180,10 +162,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         return  null;
     }
 
-    private String dealWithExpr ( JmmNode jmmNode , String s) {
-        String ret= s+visit(jmmNode.getJmmChild(0), "")+";";
-        return null;
-    }
     private Type dealWithType(JmmNode jmmNode) {
         var typename=jmmNode.get("name");
         var isArray=(Boolean) jmmNode.getObject("isArray");
