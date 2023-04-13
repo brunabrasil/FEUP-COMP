@@ -29,7 +29,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
         addVisit("Declaration", this::dealWithDeclaration);
         addVisit("NormalMethod", this::dealWithMethod);
         addVisit("MainMethod", this::dealWithMethod);
-
         addVisit("Type", this::dealWithType);
 
     }
@@ -44,7 +43,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
         List<JmmNode>children= jmmNode.getChildren();
         if(children != null){
             for (int i = 0; i < children.size(); i++){
-                System.out.println(children.get(i));
 
                 switch (children.get(i).getKind()){
                     case "Stmt":
@@ -74,11 +72,15 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
                 }
                 if(jmmNode.getKind().equals("NormalMethod")){
                     String methodName = jmmNode.get("methodName");
+
                     if(children.size()-1 == i){
-                        if(!type.getName().equals(table.getReturnType(methodName).getName())){
+                        if(type.getName().equals("CORRECT")){
+                            //VERR
+                        }
+                        else if(!type.getName().equals(table.getReturnType(methodName).getName())){
                             int line = Integer.valueOf(children.get(i).get("lineStart"));
                             int col = Integer.valueOf(children.get(i).get("colStart"));
-                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Return type"));
+                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Wrong Return type"));
 
                         }
                     }
