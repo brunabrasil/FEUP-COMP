@@ -48,7 +48,7 @@ statement
     | 'while' '(' expression ')' statement #WhileStmt
     | expression ';' #Expr
     | var=ID '=' expression ';' #Assignment
-    | var=ID '[' expression ']' '=' expression ';' #Assignment
+    | var=ID '[' expression ']' '=' expression ';' #AssignmentArray
     ;
 
 expression
@@ -61,8 +61,8 @@ expression
     | expression op=( '+' | '-' ) expression #BinaryOp
     | expression op='<' expression #BinaryOp
     | expression op='&&' expression #BinaryOp
-    | 'new' 'int' '[' expression ']' #Instantiation
-    | 'new' name=ID '(' ')' #Instantiation
+    | 'new' 'int' '[' expression ']' #NewIntArray
+    | 'new' name=ID '(' ')' #NewObject
     | value=INT #Integer
     | value='true' #Boolean
     | value='false' #Boolean
