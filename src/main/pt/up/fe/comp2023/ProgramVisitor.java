@@ -73,10 +73,12 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
                 if(jmmNode.getKind().equals("NormalMethod")){
                     String methodName = jmmNode.get("methodName");
 
+                    //last child is the return expression in Normal Method
                     if(children.size()-1 == i){
                         if(type.getName().equals("CORRECT")){
                             //VERR
                         }
+                        //checks if type of the expression being returned equals the type previously defined for the return
                         else if(!type.getName().equals(table.getReturnType(methodName).getName())){
                             int line = Integer.valueOf(children.get(i).get("lineStart"));
                             int col = Integer.valueOf(children.get(i).get("colStart"));
@@ -93,8 +95,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
     }
 
     private Type dealWithDeclaration(JmmNode jmmNode, String s) {
-        System.out.println("DeclarationName:" + jmmNode.get("varName"));
-
         for(JmmNode child: jmmNode.getChildren()){
             System.out.println("Declaration:" + child.getKind());
             visit(child, "");

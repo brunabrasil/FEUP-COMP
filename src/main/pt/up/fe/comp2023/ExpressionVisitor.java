@@ -42,7 +42,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         Type child = visit(jmmNode.getJmmChild(0));
         Integer line = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
         Integer col = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
-        if (child.getName().equals("int")) {
+
+        if (!child.getName().equals("int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col,
                     "Initializing a new array requires an integer size"));
         }
