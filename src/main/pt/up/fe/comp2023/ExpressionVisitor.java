@@ -129,22 +129,20 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         while(!parent.getKind().equals("MethodDeclaration")) { //import declaration??
             parent = parent.getJmmParent();
         }
-        //this expression cannot be used in a static method
+        //THIS expression cannot be used in a static method
         if (parent.getKind().equals("MainMethod")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col,
-                        "This can't be applied to static methods"));
+                        "THIS can't be applied to static methods"));
         }
 
         return new Type(this.table.getClassName(), false);
     }
 
     private Type dealWithUnaryOp(JmmNode jmmNode, String s) {
-        Type right = new Type("", false);
-
         int line = Integer.valueOf(jmmNode.get("lineStart"));
         int col = Integer.valueOf(jmmNode.get("colStart"));
 
-        right = visit(jmmNode.getJmmChild(0),""); //ver sobre o metodo
+        Type right = visit(jmmNode.getJmmChild(0),""); //ver sobre o metodo
 
         if (!right.getName().equals("boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Only boolean types can be used with the not operator"));
@@ -161,52 +159,62 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         if(classType.getName().equals(table.getClassName())){
             //verify if method exists
             if(table.getMethods().contains(methodName)){
-                //verify arguments type
+                //verify type of arguments
                 List<Symbol> params = table.getParameters(methodName);
-                for (int i = 1; i < jmmNode.getNumChildren(); i++){
-                    Type argType = visit(jmmNode.getJmmChild(i),"");
-                    // (i-1) because arguments starts with i=1
-                    if(!params.get(i - 1).getType().equals(argType)){
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Type of " + jmmNode.getJmmChild(i).get("value") + " of the call is not compatible with the type in the method declaration"));
-                        return new Type("ERROR", false);
+                //check if number of parameters equals number of arguments
+                if(params.size() != jmmNode.getNumChildren() -1){
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Wrong number of parameters"));
+                }
+                else{
+                    for (int i = 1; i < jmmNode.getNumChildren(); i++){
+                        Type argType = visit(jmmNode.getJmmChild(i),"");
+                        // (i-1) because arguments starts with i=1
+                        if(!params.get(i - 1).getType().equals(argType)){
+                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Type of " + jmmNode.getJmmChild(i).get("value") + " of the call is not compatible with the type in the method declaration"));
+                        }
                     }
                 }
-            }//checks if current class extends a super class
+
+            }
+            //checks if current class extends a super class
             else if(table.getSuper() == null || !table.getImports().contains(table.getSuper())){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Method undeclared"));
-                return new Type("ERROR", false);
-            }
-            else {
-
             }
         }
         else{
             //checks if class is imported (assuming method is being called correctly) ( the method is being called in the format: otherClassName.method() per example)
             if(!table.getImports().contains(classType.getName())){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Class not imported"));
+            }
+        }
+        //if method return null
+        if(table.getReturnType(methodName) == null){
+            //checks if class is imported, assume it is correct
+            if(table.getImports().contains(classType.getName())){
+                return new Type("CORRECT",false);
+            }
+            else {
                 return new Type("ERROR", false);
             }
-
         }
         return table.getReturnType(methodName);
     }
 
     private Type dealWithIndex(JmmNode jmmNode, String s) {
-        Type left = new Type("", false);
-        Type right = new Type("", false);
-        left = visit(jmmNode.getJmmChild(0));
-        right = visit(jmmNode.getJmmChild(1));
-        int lineLeft = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
-        int colLeft = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
-        int lineRight = Integer.valueOf(jmmNode.getJmmChild(1).get("lineStart"));
-        int colRight= Integer.valueOf(jmmNode.getJmmChild(1).get("colStart"));
-        System.out.println("aaaa" + left.isArray());
+        Type left = visit(jmmNode.getJmmChild(0));
+        Type right = visit(jmmNode.getJmmChild(1));
+
+        int lineL = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
+        int colL = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
+        int lineR = Integer.valueOf(jmmNode.getJmmChild(1).get("lineStart"));
+        int colR = Integer.valueOf(jmmNode.getJmmChild(1).get("colStart"));
+
         if(!left.isArray()){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineLeft, colLeft, "You cannot use indexing on a non-array variable"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineL, colL, "You cannot use indexing on a non-array variable"));
             return new Type("ERROR", false);
         }
         else if(!right.getName().equals("int")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineRight, colRight, "Index value must be of type int"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineR, colR, "Index value must be of type int"));
             return new Type("ERROR", false);
         }
 
@@ -214,20 +222,15 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
     }
 
     private Type dealWithParenthesis(JmmNode jmmNode, String s) {
-        Type child = new Type("", false);
-        child = visit(jmmNode.getJmmChild(0),"");
 
-        return new Type(child.getName(), child.isArray());
+        return visit(jmmNode.getJmmChild(0),"");
     }
-
 
     private Type dealWithBinOp(JmmNode jmmNode, String s) {
 
         String op = jmmNode.get("op");
-        Type left = new Type("", false);
-        Type right = new Type("", false);
-        left = visit(jmmNode.getJmmChild(0));
-        right = visit(jmmNode.getJmmChild(1)); //ver sobre o metodo
+        Type left = visit(jmmNode.getJmmChild(0));
+        Type right = visit(jmmNode.getJmmChild(1)); //ver sobre o metodo
 
         int lineLeft = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
         int colLeft = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
@@ -241,7 +244,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineLeft, colLeft,"Array cannot be used in arithmetic operations"));
         }
         else if(!right.getName().equals("int") && ( op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/") || op.equals("<") ) ) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineLeft, colLeft, op + " operator expects two integers Types not compatible"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineLeft, colLeft, op + " operator expects two integers! Types not compatible"));
         }
         else if(!right.getName().equals("boolean") && op.equals("&&")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineLeft, lineLeft, op + " operator expects booleans. Types not compatible"));
