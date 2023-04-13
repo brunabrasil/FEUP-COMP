@@ -68,7 +68,13 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         }
 
         //see if var is a parameter
-        List<Symbol> parameters = table.getParameters(parent.get("methodName"));
+        List<Symbol> parameters;
+        if(parent.getKind().equals("NormalMethod")){
+            parameters = table.getParameters(parent.get("methodName"));
+        }
+        else{
+            parameters = table.getParameters("main");
+        }
         if(parameters != null){
             for (int i = 0; i < parameters.size(); i++){
                 if(parameters.get(i).getName().equals(left)){
