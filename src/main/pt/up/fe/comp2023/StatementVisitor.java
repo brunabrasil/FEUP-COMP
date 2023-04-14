@@ -197,7 +197,7 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         if(!child.getName().equals("boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Expressions in conditions (while) must be of type boolean"));
         }
-        visit(jmmNode.getJmmChild(1), "");
+        visit(jmmNode.getJmmChild(1));
         return child;
     }
 
@@ -211,8 +211,8 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         if(!child.getName().equals("boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Expressions in conditions (if) must be of type boolean"));
         }
-        visit(jmmNode.getJmmChild(1), "");
-        visit(jmmNode.getJmmChild(2), "");
+        visit(jmmNode.getJmmChild(1));
+        visit(jmmNode.getJmmChild(2));
         return child;
     }
 
