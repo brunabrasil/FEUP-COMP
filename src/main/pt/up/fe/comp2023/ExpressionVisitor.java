@@ -39,7 +39,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
     }
 
     private Type dealWithNewIntArray(JmmNode jmmNode, String s) {
-        Type child = visit(jmmNode.getJmmChild(0));
+        Type child = visit(jmmNode.getJmmChild(0), "");
         Integer line = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
         Integer col = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
 
@@ -142,7 +142,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         int line = Integer.valueOf(jmmNode.get("lineStart"));
         int col = Integer.valueOf(jmmNode.get("colStart"));
 
-        Type right = visit(jmmNode.getJmmChild(0),""); //ver sobre o metodo
+        Type right = visit(jmmNode.getJmmChild(0),"");
 
         if (!right.getName().equals("boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Only boolean types can be used with the not operator"));
@@ -201,8 +201,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
     }
 
     private Type dealWithIndex(JmmNode jmmNode, String s) {
-        Type left = visit(jmmNode.getJmmChild(0));
-        Type right = visit(jmmNode.getJmmChild(1));
+        Type left = visit(jmmNode.getJmmChild(0), "");
+        Type right = visit(jmmNode.getJmmChild(1), "");
 
         int lineL = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
         int colL = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
@@ -211,11 +211,10 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
 
         if(!left.isArray()){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineL, colL, "You cannot use indexing on a non-array variable"));
-            return new Type("ERROR", false);
         }
+
         else if(!right.getName().equals("int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineR, colR, "Index value must be of type int"));
-            return new Type("ERROR", false);
         }
 
         return new Type("int", false);
