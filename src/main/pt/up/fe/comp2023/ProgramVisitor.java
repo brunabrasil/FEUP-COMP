@@ -26,16 +26,11 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
         addVisit("Program", this::dealWithProgram);
         addVisit("Class", this::dealWithClass);
         addVisit("Import", this::dealWithImport);
-        addVisit("Declaration", this::dealWithDeclaration);
         addVisit("NormalMethod", this::dealWithMethod);
         addVisit("MainMethod", this::dealWithMethod);
-        addVisit("Type", this::dealWithType);
 
     }
 
-    private Type dealWithType(JmmNode jmmNode, String s) {
-        return null;
-    }
 
     private Type dealWithMethod(JmmNode jmmNode, String s) {
 
@@ -94,13 +89,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
         return null;
     }
 
-    private Type dealWithDeclaration(JmmNode jmmNode, String s) {
-        for(JmmNode child: jmmNode.getChildren()){
-            System.out.println("Declaration:" + child.getKind());
-            visit(child, "");
-        }
-        return  null;
-    }
 
     private Type dealWithClass(JmmNode jmmNode, String s) {
         for(JmmNode child: jmmNode.getChildren()){

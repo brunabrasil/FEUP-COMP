@@ -33,8 +33,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         addVisit("Identifier", this::dealWithIdentifier);
         addVisit("This", this::dealWithThis);
         addVisit("Boolean", this::dealWithBoolean);
-        addVisit("Integer", this::visitInteger);
-        addVisit("Length", this::visitLength);
+        addVisit("Integer", this::dealWithInteger);
+        addVisit("Length", this::dealWithLength);
 
     }
 
@@ -54,18 +54,18 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         return new Type(jmmNode.get("name"), false);
     }
 
-    private Type visitLength(JmmNode jmmNode, String s) {
+    private Type dealWithLength(JmmNode jmmNode, String s) {
         int line = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
         int col = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
         Type type = visit(jmmNode.getJmmChild(0));
         if(!type.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, jmmNode.getJmmChild(0).get("name") + " is not an array and can not use length method"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col,  "Must be an array to use length method"));
             return new Type("ERROR", false);
         }
         return new Type("int", false);
     }
 
-    private Type visitInteger(JmmNode jmmNode, String s) {
+    private Type dealWithInteger(JmmNode jmmNode, String s) {
         return new Type("int", false);
     }
 
@@ -204,16 +204,16 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         Type left = visit(jmmNode.getJmmChild(0), "");
         Type right = visit(jmmNode.getJmmChild(1), "");
 
-        int lineL = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
-        int colL = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
-        int lineR = Integer.valueOf(jmmNode.getJmmChild(1).get("lineStart"));
-        int colR = Integer.valueOf(jmmNode.getJmmChild(1).get("colStart"));
+        int lineL = Integer.parseInt(jmmNode.getJmmChild(0).get("lineStart"));
+        int colL = Integer.parseInt(jmmNode.getJmmChild(0).get("colStart"));
+        int lineR = Integer.parseInt(jmmNode.getJmmChild(1).get("lineStart"));
+        int colR = Integer.parseInt(jmmNode.getJmmChild(1).get("colStart"));
 
         if(!left.isArray()){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineL, colL, "You cannot use indexing on a non-array variable"));
         }
 
-        else if(!right.getName().equals("int")) {
+        if(!right.getName().equals("int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineR, colR, "Index value must be of type int"));
         }
 
