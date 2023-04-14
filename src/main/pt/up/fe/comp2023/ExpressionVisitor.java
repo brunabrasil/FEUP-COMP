@@ -55,9 +55,10 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
     }
 
     private Type dealWithLength(JmmNode jmmNode, String s) {
-        int line = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
-        int col = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
-        Type type = visit(jmmNode.getJmmChild(0));
+        int line = Integer.parseInt(jmmNode.getJmmChild(0).get("lineStart"));
+        int col = Integer.parseInt(jmmNode.getJmmChild(0).get("colStart"));
+
+        Type type = visit(jmmNode.getJmmChild(0), "");
         if(!type.isArray()) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col,  "Must be an array to use length method"));
             return new Type("ERROR", false);
@@ -82,43 +83,48 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         while(!parent.getKind().equals("NormalMethod") && !parent.getKind().equals("MainMethod")) {
             parent = parent.getJmmParent();
         }
-        if(parent.getKind().equals("NormalMethod")) {
-            String method = parent.get("methodName");
-            List<Symbol> locals = table.getLocalVariables(method);
-            if(locals != null){
-                for(Symbol local : locals) {
-                    if(local.getName().equals(val)) {
-                        return local.getType();
-                    }
+        String methodName;
+        if(parent.getKind().equals("NormalMethod")){
+            methodName = parent.get("methodName");
+        }
+        else{
+            methodName = "main";
+        }
+        List<Symbol> locals = table.getLocalVariables(methodName);
+        if(locals != null){
+            for(Symbol local : locals) {
+                if(local.getName().equals(val)) {
+                    return local.getType();
                 }
-            }
-
-            List<Symbol> params = table.getParameters(method);
-            if(params != null){
-                for(Symbol param : params) {
-                    if(param.getName().equals(val)) {
-                        return param.getType();
-                    }
-                }
-            }
-            List<Symbol> fields = table.getFields();
-            if(fields != null){
-                for(Symbol field : fields) {
-                    if(field.getName().equals(val)) {
-                        if (parent.getKind().equals("MainMethod")) { //ver istoo INUTILLL
-                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col,
-                                    val + " is a field and can't be used in main method"));
-                        }
-                        return field.getType();
-                    }
-                }
-            }
-
-
-            if((table.getImports() == null || !table.getImports().contains(val))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Variable not declared"));
             }
         }
+
+        List<Symbol> params = table.getParameters(methodName);
+        if(params != null){
+            for(Symbol param : params) {
+                if(param.getName().equals(val)) {
+
+                    return param.getType();
+                }
+            }
+        }
+        List<Symbol> fields = table.getFields();
+        if(fields != null){
+            for(Symbol field : fields) {
+                if(field.getName().equals(val)) {
+                    if(methodName.equals("main")){
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Fields cannot be used in main method"));
+                    }
+                    return field.getType();
+                }
+            }
+        }
+
+
+        if((table.getImports() == null || !table.getImports().contains(val))) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Variable not declared"));
+        }
+
         return new Type("ERROR", false);
     }
 
@@ -126,7 +132,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         JmmNode parent = jmmNode.getJmmParent();
         Integer line = Integer.valueOf(jmmNode.get("lineStart"));
         Integer col = Integer.valueOf(jmmNode.get("colStart"));
-        while(!parent.getKind().equals("MethodDeclaration")) { //import declaration??
+        while(!parent.getKind().equals("NormalMethod") && !parent.getKind().equals("MainMethod")) {
             parent = parent.getJmmParent();
         }
         //THIS expression cannot be used in a static method
@@ -170,7 +176,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
                         Type argType = visit(jmmNode.getJmmChild(i),"");
                         // (i-1) because arguments starts with i=1
                         if(!params.get(i - 1).getType().equals(argType)){
-                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Type of " + jmmNode.getJmmChild(i).get("value") + " of the call is not compatible with the type in the method declaration"));
+                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Type of the call is not compatible with the type in the method declaration"));
                         }
                     }
                 }
@@ -239,7 +245,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
         if(!left.getName().equals(right.getName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineRight, colRight, "Operands have different types"));
         }
-        else if((left.isArray() || right.isArray()) && (op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/") || op.equals("<"))) {
+        else if(left.isArray() || right.isArray()) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, lineLeft, colLeft,"Array cannot be used in arithmetic operations"));
         }
         else if(!right.getName().equals("int") && ( op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/") || op.equals("<") ) ) {
@@ -255,7 +261,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
             return new Type("boolean", false);
         }
 
-        return new Type(right.getName(), right.isArray());
+        return right;
     }
 
 

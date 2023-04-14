@@ -25,7 +25,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
     protected void buildVisitor() {
         addVisit("Program", this::dealWithProgram);
         addVisit("Class", this::dealWithClass);
-        addVisit("Import", this::dealWithImport);
         addVisit("NormalMethod", this::dealWithMethod);
         addVisit("MainMethod", this::dealWithMethod);
 
@@ -75,8 +74,8 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
                         }
                         //checks if type of the expression being returned equals the type previously defined for the return
                         else if(!type.getName().equals(table.getReturnType(methodName).getName())){
-                            int line = Integer.valueOf(children.get(i).get("lineStart"));
-                            int col = Integer.valueOf(children.get(i).get("colStart"));
+                            int line = Integer.parseInt(children.get(i).get("lineStart"));
+                            int col = Integer.parseInt(children.get(i).get("colStart"));
                             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Wrong Return type"));
 
                         }
@@ -97,10 +96,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
             }
 
         }
-        return null;
-    }
-
-    private Type dealWithImport(JmmNode jmmNode, String s) {
         return null;
     }
 
