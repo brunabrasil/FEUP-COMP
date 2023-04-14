@@ -131,4 +131,11 @@ public class SemanticAnalysisTest {
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/AssumeArguments.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public  void whileIfArrayWhileCondNotBool(){
+        var result = TestUtils.analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/whileIfArrayWhileCondNotBool.jmm"));
+        TestUtils.noErrors(result);
+        System.out.println(result.getReports());
+    }
 }

@@ -36,6 +36,9 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
     private Type dealWithAssignmentArray(JmmNode jmmNode, String s) {
         String varLeft = jmmNode.get("var");
 
+        int line = Integer.parseInt(jmmNode.get("lineStart"));
+        int col = Integer.parseInt(jmmNode.get("colStart"));
+
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(table, reports);
         Type indexType = expressionVisitor.visit(jmmNode.getJmmChild(0), "");
         Type rightType = expressionVisitor.visit(jmmNode.getJmmChild(1), "");
@@ -46,11 +49,21 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         while(!parent.getKind().equals("NormalMethod") && !parent.getKind().equals("MainMethod")) {
             parent = parent.getJmmParent();
         }
-        //see if var is a field
+        //see if var is a
+        String methodName;
+        if(parent.getKind().equals("NormalMethod")){
+            methodName = parent.get("methodName");
+        }
+        else{
+            methodName = "main";
+        }
         List<Symbol> fields = table.getFields();
         if(fields != null){
             for (int i = 0; i < fields.size(); i++){
                 if(fields.get(i).getName().equals(varLeft)){
+                    if(methodName.equals("main")){
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Fields cannot be used in main method"));
+                    }
                     leftType = fields.get(i).getType();
                     break;
                 }
@@ -58,13 +71,8 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         }
 
         //see if var is a parameter
-        List<Symbol> parameters;
-        if(parent.getKind().equals("NormalMethod")){
-            parameters = table.getParameters(parent.get("methodName"));
-        }
-        else{
-            parameters = table.getParameters("main");
-        }
+        List<Symbol> parameters = table.getParameters(methodName);
+
         if(parameters != null){
             for (int i = 0; i < parameters.size(); i++){
                 if(parameters.get(i).getName().equals(varLeft)){
@@ -75,13 +83,8 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         }
 
         //see if var is a local variable
-        List<Symbol> localVariables;
-        if(parent.getKind().equals("NormalMethod")){
-            localVariables = table.getLocalVariables(parent.get("methodName"));
-        }
-        else{
-            localVariables = table.getLocalVariables("main");
-        }
+        List<Symbol> localVariables = table.getLocalVariables(methodName);
+
         if(localVariables != null){
             for (int i = 0; i < localVariables.size(); i++){
                 if(localVariables.get(i).getName().equals(varLeft)){
@@ -90,8 +93,6 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
                 }
             }
         }
-        int line = Integer.valueOf(jmmNode.get("lineStart"));
-        int col = Integer.valueOf(jmmNode.get("colStart"));
 
         if(!leftType.isArray()){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Var is not an array"));
