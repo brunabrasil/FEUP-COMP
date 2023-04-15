@@ -12,6 +12,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private JmmSymbolTable table;
     private List<Report> reports;
     private String scope;
+    private String currentMethodName;
+    private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","ArrayAssignment");
     public OllirVisitor(JmmSymbolTable table, List<Report> reports){
         this.table=table;
         this.reports=reports;
@@ -20,30 +22,46 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     @Override
     protected void buildVisitor() {
         addVisit("Program", this::dealWithProgram );
-        addVisit("Import", this::dealWithImport);
+        //addVisit("Import", this::dealWithImport);
         addVisit("Class", this::dealWithClassDeclaration);
         addVisit("Declaration", this::dealWithVarDeclaration);
         addVisit("NormalMethod", this::dealWithNormalMethodDeclaration);
         addVisit("MainMethod", this::dealWithMainMethodDeclaration);
+
+        addVisit("Assignment",this::dealWithAssignment);
+        addVisit("Integer",this::dealWithInteger);
+        addVisit("Boolean",this::dealWithBoolean);
+        addVisit("Identifier",this::dealWithIdentifier);
+        addVisit("This",this::dealWithThis);
+
+        addVisit("BinaryOp",this::dealWithBinaryOp);
+        setDefaultVisit(this::defaultVisit);
+    }
+
+
+
+    private String defaultVisit(JmmNode jmmNode,String s){
+        System.out.println(jmmNode.getKind());
+        return "";
     }
 
     private String dealWithProgram(JmmNode jmmNode, String s) {
         String ret="";
         for(JmmNode child : jmmNode.getChildren()){
             ret += visit(child,"");
-            ret +="\n";
+            //ret +="\n";
         }
         return ret;
     }
 
     private String dealWithImport(JmmNode jmmNode, String s) {
-
+        /*
         for(String importstate : this.table.getImports()){
             s+=String.format("%s;\n",importstate);
         }
         s+="\n";
-
-        return s;
+        */
+        return "";
     }
 
     private String dealWithClassDeclaration(JmmNode jmmNode, String s) {
@@ -55,19 +73,37 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         StringBuilder ollir = new StringBuilder();
 
+        // IMPORTS
+        for(String importstate : this.table.getImports()){
+            ollir.append(String.format("%s;\n",importstate));
+        }
+        ollir.append("\n");
+
+        // CLASS NAME AND EXXTEND
         ollir.append(OllirTemplates.classTemplate(this.table.getClassName(),this.table.getSuper()));
 
 
         ollir.append("\n");
-        ollir.append(OllirTemplates.emptyConstructorTemplate(this.table.getClassName()));
 
-        // Methods
+        this.scope="CLASS";
+        // Getting methods and fields
         for(JmmNode child : jmmNode.getChildren()){
-            if (!child.getKind().equals("VarDeclaration")){
+            if (child.getKind().equals("Declaration")){
+                fields.add(visit(child,""));
+            }
+            else {
                 classBody.add(visit(child,""));
             }
+            System.out.println(child.getKind());
         }
 
+        // Fields
+        ollir.append(String.join("", fields)).append("\n\n");
+
+        // EMPTY CONSTRUCTOR
+        ollir.append(OllirTemplates.emptyConstructorTemplate(this.table.getClassName())).append("\n\n");
+
+        // Methods
         ollir.append(String.join("\n\n", classBody));
 
         ollir.append(OllirTemplates.closeBrackets());
@@ -77,21 +113,22 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     }
 
     private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
+        var varname=jmmNode.get("varName");
+        Type type=dealWithType(jmmNode.getJmmChild(0));
+        Symbol symbol=new Symbol(type,varname);
+        if(scope=="CLASS"){
+            if(this.table.checkFieldExistance(symbol)){
+                return OllirTemplates.fieldTemplate(symbol);
+            }
+        }
 
-        return null;
+
+        return "";
     }
 
     private String dealWithMainMethodDeclaration(JmmNode jmmNode, String s) {
         scope="METHOD";
-        Type mainType=new Type("void",false);
-        Symbol mainSymbol=new Symbol(mainType,"main");
-        List<Symbol> parameters = new ArrayList<>();
-        parameters.add(mainSymbol);
-
-        if(!this.table.methodExists("main",mainType,parameters)){
-            // TODO report error
-            return null;
-        }
+        currentMethodName="main";
 
         StringBuilder ollir = new StringBuilder();
         ollir.append(OllirTemplates.methodTemplate("main",
@@ -119,15 +156,10 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String dealWithNormalMethodDeclaration(JmmNode jmmNode, String s) {
         scope="METHOD";
         String methodName = jmmNode.get("methodName");
-        Type methodType=dealWithType(jmmNode.getJmmChild(0));
 
-        List<Symbol> methodParams = getMethodParameters(jmmNode);
+        currentMethodName=methodName;
+        System.out.println("CurrentMethod="+currentMethodName);
 
-
-        if(!this.table.methodExists(methodName,methodType,methodParams)){
-            // TODO report error
-            return null;
-        }
 
         StringBuilder ollir = new StringBuilder();
         ollir.append(OllirTemplates.methodTemplate(methodName,
@@ -135,15 +167,19 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 OllirTemplates.typeTemplate(this.table.getReturnType(methodName)),false));
 
         List<String> body = new ArrayList<>();
+        String returnString=String.format("ret%s ",OllirTemplates.typeTemplate(this.table.getReturnType(methodName)));
 
         for (JmmNode child : jmmNode.getChildren()) {
             if(child.getKind().equals("Type"))
                 continue;
-            body.add( visit(child,""));
+            else if(statements.contains(child.getKind()))
+                body.add( visit(child,""));
+            else
+                returnString+=visit(child,"");
         }
-
+        returnString+=";";
         ollir.append(String.join("\n", body));
-
+        ollir.append(returnString);
         ollir.append(OllirTemplates.closeBrackets());
 
         s+=ollir.toString();
@@ -151,6 +187,44 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         return s;
     }
+    private String dealWithAssignment(JmmNode jmmNode,String s){
+
+
+        String varName=jmmNode.get("var");
+        boolean classField=false;
+        Symbol variable;
+        if((variable=this.table.getFieldByName(varName))!=null){
+            classField=true;
+        }
+        else if((variable=this.table.getParameterInMethod(currentMethodName,varName))==null){
+            variable=this.table.getVariableInMethod(currentMethodName,varName);
+        }
+
+
+        String ollirVariable=OllirTemplates.variableTemplate(variable);
+        String ollirType=OllirTemplates.typeTemplate(variable.getType());
+
+        StringBuilder ollir = new StringBuilder();
+
+        String expression=visit(jmmNode.getJmmChild(0),"");
+        if(classField){
+
+            ollir.append(OllirTemplates.putfieldTemplate(ollirVariable,expression));
+        }
+        else{
+            ollir.append(String.format("%s :=%s %s;\n",ollirVariable,ollirType,expression));
+        }
+
+
+
+
+        s+=ollir.toString();
+        return s;
+
+    }
+
+
+
 
     private Type dealWithType(JmmNode jmmNode) {
         var typename=jmmNode.get("name");
@@ -159,25 +233,62 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         return  type;
     }
 
-    private List<Symbol> getMethodParameters(JmmNode jmmNode){
-        List<Symbol> parameters = new ArrayList<>();
-        List<String> paramNames=(List<String>) jmmNode.getObject("parameters");
-        var i=0;
-        for(JmmNode child : jmmNode.getChildren()){
-            // Ignore the first "type"
-            if(i==0){
-                i++;
-                continue;
-            }
-            // Method Parameters
-            if(child.getKind().equals("Type")){
-                Type paramType=dealWithType(child);
-                String paramName=paramNames.get(i-1);
-                Symbol paramSymbol=new Symbol(paramType,paramName);
-                parameters.add(paramSymbol);
-            }
+
+    private String dealWithInteger(JmmNode jmmNode,String s){
+        System.out.println("DealWithInteger");
+        Symbol integer=new Symbol(new Type("int",false),jmmNode.get("value"));
+        return OllirTemplates.variableTemplate(integer);
+    }
+
+    private String dealWithThis(JmmNode jmmNode, String s) {
+        return "";
+    }
+
+    private String dealWithIdentifier(JmmNode jmmNode, String s) {
+        System.out.println("DealWitIdentifier");
+        String val = jmmNode.get("value");
+        Symbol variable;
+        System.out.println("val="+val);
+        System.out.println("CurrentMethod="+currentMethodName);
+        // It's a class field
+        if((variable=this.table.getFieldByName(val))!=null){
+            return OllirTemplates.getfieldTemplate(variable);
         }
-        return parameters;
+        // It's a method parameter
+        else if((variable=this.table.getParameterInMethod(currentMethodName,val))!=null){
+            return this.table.parameterNumber(currentMethodName,val)+"."+OllirTemplates.variableTemplate(variable);
+        }
+        // It's a method local variable
+        else{
+            variable=this.table.getVariableInMethod(currentMethodName,val);
+        }
+
+
+        return OllirTemplates.variableTemplate(variable);
+    }
+
+    private String dealWithBoolean(JmmNode jmmNode, String s) {
+        System.out.println("DealWitBollean");
+        String boolvalue="1";
+        if(jmmNode.get("value")=="false")
+            boolvalue="0";
+        Symbol bool=new Symbol(new Type("boolean",false),boolvalue);
+
+        return OllirTemplates.variableTemplate(bool);
+    }
+    private String dealWithBinaryOp(JmmNode jmmNode, String s) {
+
+        String op=jmmNode.get("op");
+        String left=visit(jmmNode.getJmmChild(0));
+        String right= visit(jmmNode.getJmmChild(1));
+
+        Type opType;
+
+        StringBuilder ollir=new StringBuilder();
+        ollir.append(String.format("%s %s %s",left,op,right));
+
+
+        return "";
     }
 
 }

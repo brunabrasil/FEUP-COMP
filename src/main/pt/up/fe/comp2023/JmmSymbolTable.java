@@ -52,6 +52,29 @@ public class JmmSymbolTable implements SymbolTable {
         return fields;
     }
 
+    public Boolean checkFieldExistance(Symbol symbol){
+        return this.fields.contains(symbol);
+    }
+
+    public Symbol getFieldByName(String name){
+        System.out.println("In getFieldbyName");
+        for(var field : this.fields){
+            if(field.getName().equals(name))
+                return field;
+        }
+        return null;
+    }
+
+    public Symbol getVariableInMethod(String methodName,String varName){
+
+        for(var variable : this.localVariables.get(methodName)){
+            System.out.println(variable);
+            if(variable.getName().equals(varName))
+                return variable;
+        }
+        return null;
+    }
+
 
     public void addMethod(String methodname,Type methodtype){
         this.methods.put(methodname,methodtype);
@@ -67,20 +90,7 @@ public class JmmSymbolTable implements SymbolTable {
         return methodsList;
     }
 
-    public Boolean methodExists(String methodName, Type methodType, List<Symbol> parameters) {
-        // Check if the method name exists in the map
-        if (methods.containsKey(methodName)) {
-            // If it exists, check if the method type matches
-            if (methods.get(methodName).equals(methodType)) {
-                // If the method type matches, check if the parameters match
-                if (methodParameters.get(methodName).equals(parameters)) {
-                    // If the parameters match, return true
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+
 
     public List<String> parametersToOllir(String methodName) {
         List<String> ollir = new ArrayList<>();
@@ -111,6 +121,27 @@ public class JmmSymbolTable implements SymbolTable {
     public void addTempLocalVariable(Symbol var){
         //System.out.println("IN TEMP LOCAL VARIABLES="+var);
         this.templocalvariables.add(var);
+    }
+
+
+    public Symbol getParameterInMethod(String methodName,String name){
+        System.out.println("In getParameterInMethod");
+        System.out.println("mertodName:"+methodName);
+        System.out.println(this.methodParameters);
+        for(var symbol : this.methodParameters.get(methodName)){
+            if(symbol.getName().equals(name))
+                return symbol;
+        }
+        return null;
+    }
+
+    public String parameterNumber(String methodName,String name){
+        var parameters=this.methodParameters.get(methodName);
+        for(int i =1;i<=parameters.size();i++){
+            if(parameters.get(i-1).getName().equals(name))
+                return "$"+i;
+        }
+        return null;
     }
 
     public void addLocalVariables(String methodname){
