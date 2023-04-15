@@ -48,7 +48,7 @@ statement
     | 'while' '(' expression ')' statement #WhileStmt
     | expression ';' #Expr
     | var=ID '=' expression ';' #Assignment
-    | var=ID '[' expression ']' '=' expression ';' #Assignment
+    | var=ID '[' expression ']' '=' expression ';' #ArrayAssignment
     ;
 
 expression

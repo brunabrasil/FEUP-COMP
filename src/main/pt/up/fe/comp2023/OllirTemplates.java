@@ -37,6 +37,7 @@ public class OllirTemplates {
         return var.toString();
     }
 
+
     public static String typeTemplate(Type type) {
         StringBuilder ollir = new StringBuilder();
 
@@ -80,5 +81,14 @@ public class OllirTemplates {
         ollir.append(openBrackets());
 
         return ollir.toString();
+    }
+
+    public static String putfieldTemplate(String variable, String value) {
+        return String.format("putfield(this, %s, %s).V", variable, value);
+    }
+
+
+    public static String getfieldTemplate(Symbol variable) {
+        return String.format("getfield(this, %s)%s", variableTemplate(variable), typeTemplate(variable.getType()));
     }
 }
