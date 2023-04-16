@@ -124,7 +124,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         List<Symbol> methodParams=new ArrayList<>();
 
         List<String> paramNames=(List<String>) jmmNode.getObject("parameters");
-        System.out.println("PARAMNAMES="+paramNames);
         var i=0;
         for(JmmNode child : jmmNode.getChildren()){
             // Ignore the first "type"
@@ -138,7 +137,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
                 Type paramType=dealWithType(child);
 
                 String paramName=paramNames.get(i-1);
-                System.out.println("ParamName="+paramName);
                 Symbol paramSymbol=new Symbol(paramType,paramName);
                 methodParams.add(paramSymbol);
             }
@@ -165,7 +163,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         if(scope=="CLASS")
             table.addField(symbol);
         if(scope=="METHOD"){
-            System.out.println("IN METHOD, SYMBOL="+symbol);
+            //System.out.println("IN METHOD, SYMBOL="+symbol);
             table.addTempLocalVariable(symbol);
         }
 
