@@ -84,7 +84,7 @@ public class OllirTemplates {
     }
 
     public static String putfieldTemplate(String variable, String value) {
-        return String.format("putfield(this, %s, %s).V", variable, value);
+        return String.format("putfield(this, %s, %s).V;", variable, value);
     }
 
 

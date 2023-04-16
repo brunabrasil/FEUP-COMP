@@ -57,7 +57,6 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     public Symbol getFieldByName(String name){
-        System.out.println("In getFieldbyName");
         for(var field : this.fields){
             if(field.getName().equals(name))
                 return field;
@@ -68,7 +67,7 @@ public class JmmSymbolTable implements SymbolTable {
     public Symbol getVariableInMethod(String methodName,String varName){
 
         for(var variable : this.localVariables.get(methodName)){
-            System.out.println(variable);
+            //System.out.println(variable);
             if(variable.getName().equals(varName))
                 return variable;
         }
@@ -125,9 +124,6 @@ public class JmmSymbolTable implements SymbolTable {
 
 
     public Symbol getParameterInMethod(String methodName,String name){
-        System.out.println("In getParameterInMethod");
-        System.out.println("mertodName:"+methodName);
-        System.out.println(this.methodParameters);
         for(var symbol : this.methodParameters.get(methodName)){
             if(symbol.getName().equals(name))
                 return symbol;

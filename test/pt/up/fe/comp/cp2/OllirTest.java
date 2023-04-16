@@ -35,6 +35,10 @@ public class OllirTest {
     }
 
     @Test
+    public void compileAssignmentWithFields(){
+        testJmmCompilation("pt/up/fe/comp/cp2/ollir/OllirToJasminFields.jmm", this::compileAssignmentWithFields);
+    }
+    @Test
     public void compileBasic() {
         testJmmCompilation("pt/up/fe/comp/cp2/ollir/CompileBasic.jmm", this::compileBasic);
     }
@@ -157,6 +161,38 @@ public class OllirTest {
                 .orElse(null);
 
         assertNotNull("Could not find method2'", method2);
+    }
+
+    public void compileAssignmentWithFields(ClassUnit classUnit){
+        // Test name of the class and super
+        assertEquals("Class name not what was expected", "OllirToJasminFields", classUnit.getClassName());
+
+        // Test fields
+        assertEquals("Class should have one field", 1, classUnit.getNumFields());
+        var fieldNames = new HashSet<>(Arrays.asList("intField", "boolField"));
+        assertThat(fieldNames, hasItem(classUnit.getField(0).getFieldName()));
+
+
+
+        // Test foo
+        var methodName = "foo";
+        Method methodFoo = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals(methodName))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find method " + methodName, methodFoo);
+
+
+        var assignInst = methodFoo.getInstructions().stream()
+                .filter(inst -> inst instanceof AssignInstruction)
+                .map(AssignInstruction.class::cast)
+                .findFirst();
+        assertTrue("Could not find an assign instruction in method " + methodName, assignInst.isPresent());
+
+        assertEquals("Assignment does not have the expected type", ElementType.INT32,
+                assignInst.get().getTypeOfAssign().getTypeOfElement());
+
     }
 
     public void compileBasic(ClassUnit classUnit) {
