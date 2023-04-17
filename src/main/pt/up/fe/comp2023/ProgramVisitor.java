@@ -85,7 +85,7 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
             }
         }
 
-        return null;
+        return new Type("null", false);
     }
 
 
@@ -106,7 +106,7 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
             }
 
         }
-        return null;
+        return new Type("null", false);
     }
 
 

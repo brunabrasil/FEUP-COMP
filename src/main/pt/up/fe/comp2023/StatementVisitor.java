@@ -180,12 +180,16 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
             return right;
         }
         //if both are of type that are imported
-        if(table.getImports().contains(leftType.getName()) && table.getImports().contains(right.getName())){
+        else if(table.getImports().contains(leftType.getName()) && table.getImports().contains(right.getName())){
             return right;
         }
-
-        if(!right.getName().equals(leftType.getName())){
+        else if(right.getName().equals("CORRECT")){
+            return right;
+        }
+        else if(!right.getName().equals(leftType.getName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Type of the assignee must be compatible with the assigned "));
+            return new Type("ERROR", false);
+
         }
         return right;
     }
