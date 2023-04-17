@@ -197,6 +197,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
             //checks if class is imported (assuming method is being called correctly) ( the method is being called in the format: otherClassName.method() per example)
             if(!table.getImports().contains(classType.getName())){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Class not imported"));
+                return new Type("ERROR", false);
             }
             else{
                 return new Type("CORRECT", false);
