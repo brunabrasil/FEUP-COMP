@@ -123,6 +123,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
 
         if((table.getImports() == null || !table.getImports().contains(val))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Variable not declared"));
+        }else{
+            return new Type(val, false);
         }
 
         return new Type("ERROR", false);
@@ -183,14 +185,21 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
 
             }
             //checks if current class extends a super class
-            else if(table.getSuper() == null || !table.getImports().contains(table.getSuper())){
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Method undeclared"));
+            else{
+                if(table.getSuper() == null){
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Method undeclared"));
+                }else{
+                    return new Type("CORRECT", false);
+                }
             }
         }
         else{
             //checks if class is imported (assuming method is being called correctly) ( the method is being called in the format: otherClassName.method() per example)
             if(!table.getImports().contains(classType.getName())){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), Integer.parseInt(jmmNode.get("colStart")), "Class not imported"));
+            }
+            else{
+                return new Type("CORRECT", false);
             }
         }
         //if method return null

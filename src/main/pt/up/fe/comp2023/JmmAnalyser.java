@@ -29,11 +29,10 @@ public class JmmAnalyser implements JmmAnalysis {
         visitor.visit(node,"");
 
         System.out.println(jmmParserResult.getRootNode().toTree());
-        System.out.println("Visitor - Semantic Analysis...");
-        ProgramVisitor expressionsAnalyser = new ProgramVisitor(symbolTable, reports);
-        expressionsAnalyser.visit(node, "");
 
-        System.out.println("Semantic Analysis Done!");
+        ProgramVisitor programAnalyser = new ProgramVisitor(symbolTable, reports);
+
+        programAnalyser.visit(node, "");
 
         return new JmmSemanticsResult(jmmParserResult, symbolTable, reports);
     }
