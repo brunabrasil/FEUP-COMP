@@ -93,6 +93,8 @@ public class OllirTemplates {
     }
 
     public static String invokestaticTemplate(String target, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokestatic(%s, \"%s\")%s", target, method, typeTemplate(returnType));
         return String.format("invokestatic(%s, \"%s\", %s)%s", target, method, parameters, typeTemplate(returnType));
     }
 
@@ -117,7 +119,7 @@ public class OllirTemplates {
         return String.format("new(%s).%s", objectClass, objectClass);
     }
 
-    public static String objectInstanceTemplate(Symbol variable) {
-        return String.format("invokespecial(%s,\"<init>\").V;", variableTemplate(variable));
+    public static String objectInstanceTemplate(String name,String type) {
+        return String.format("invokespecial(%s%s,\"<init>\").V;",name,type);
     }
 }
