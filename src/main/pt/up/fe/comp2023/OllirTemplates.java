@@ -91,4 +91,33 @@ public class OllirTemplates {
     public static String getfieldTemplate(Symbol variable) {
         return String.format("getfield(this, %s)%s", variableTemplate(variable), typeTemplate(variable.getType()));
     }
+
+    public static String invokestaticTemplate(String target, String method, Type returnType, String parameters) {
+        return String.format("invokestatic(%s, \"%s\", %s)%s", target, method, parameters, typeTemplate(returnType));
+    }
+
+    public static String invokevirtualTemplate(String var, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokevirtual(%s, \"%s\")%s", var != null ? var : "this", method, typeTemplate(returnType));
+        return String.format("invokevirtual(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, typeTemplate(returnType));
+    }
+
+    public static String invokespecialTemplate(String var, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokespecial(%s, \"%s\")%s", var != null ? var : "this", method, typeTemplate(returnType));
+        return String.format("invokespecial(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, typeTemplate(returnType));
+    }
+
+    public static String invokevirtualTemplate(String method, Type returnType, String parameters) {
+        return invokevirtualTemplate(null, method, returnType, parameters);
+    }
+
+
+    public static String objectInitTemplate(String objectClass) {
+        return String.format("new(%s).%s", objectClass, objectClass);
+    }
+
+    public static String objectInstanceTemplate(Symbol variable) {
+        return String.format("invokespecial(%s,\"<init>\").V;", variableTemplate(variable));
+    }
 }
