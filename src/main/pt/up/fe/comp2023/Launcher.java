@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
@@ -42,8 +43,12 @@ public class Launcher {
 
         // ... add remaining stages
         JmmAnalyser analyser= new JmmAnalyser();
-
+        System.out.println(parserResult.getRootNode().toTree());
         analyser.semanticAnalysis(parserResult);
+
+        OllirOptimization ollir=new OllirOptimization();
+        ollir.toOllir(analyser.semanticAnalysis(parserResult));
+
 
     }
 
