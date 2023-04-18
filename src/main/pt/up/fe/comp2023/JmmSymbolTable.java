@@ -89,7 +89,9 @@ public class JmmSymbolTable implements SymbolTable {
         return methodsList;
     }
 
-
+    public Type getMethodType(String methodName){
+        return methods.get(methodName);
+    }
 
     public List<String> parametersToOllir(String methodName) {
         List<String> ollir = new ArrayList<>();
