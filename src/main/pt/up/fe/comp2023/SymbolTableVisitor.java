@@ -6,6 +6,7 @@ import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 
+import javax.sound.midi.SysexMessage;
 import java.util.*;
 public class SymbolTableVisitor extends AJmmVisitor<String,String >{
 
@@ -129,6 +130,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
             if(child.getKind().equals("Declaration")){
                 visit(child,"");
             }
+            i++;
         }
 
         table.addLocalVariables(methodName);
@@ -147,7 +149,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String,String >{
         if(scope=="CLASS")
             table.addField(symbol);
         if(scope=="METHOD"){
-            System.out.println("IN METHOD, SYMBOL="+symbol);
+            //System.out.println("IN METHOD, SYMBOL="+symbol);
             table.addTempLocalVariable(symbol);
         }
 

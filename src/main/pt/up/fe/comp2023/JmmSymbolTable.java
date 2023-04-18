@@ -52,6 +52,28 @@ public class JmmSymbolTable implements SymbolTable {
         return fields;
     }
 
+    public Boolean checkFieldExistance(Symbol symbol){
+        return this.fields.contains(symbol);
+    }
+
+    public Symbol getFieldByName(String name){
+        for(var field : this.fields){
+            if(field.getName().equals(name))
+                return field;
+        }
+        return null;
+    }
+
+    public Symbol getVariableInMethod(String methodName,String varName){
+
+        for(var variable : this.localVariables.get(methodName)){
+            //System.out.println(variable);
+            if(variable.getName().equals(varName))
+                return variable;
+        }
+        return null;
+    }
+
 
     public void addMethod(String methodname,Type methodtype){
         this.methods.put(methodname,methodtype);
@@ -66,6 +88,22 @@ public class JmmSymbolTable implements SymbolTable {
 
         return methodsList;
     }
+
+    public Type getMethodType(String methodName){
+        return methods.get(methodName);
+    }
+
+    public List<String> parametersToOllir(String methodName) {
+        List<String> ollir = new ArrayList<>();
+
+        var parameters = methodParameters.get(methodName);
+        for (var parameter : parameters) {
+            ollir.add(OllirTemplates.variableTemplate(parameter));
+        }
+
+        return ollir;
+    }
+
 
     @Override
     public Type getReturnType(String s) {
@@ -83,6 +121,24 @@ public class JmmSymbolTable implements SymbolTable {
     public void addTempLocalVariable(Symbol var){
         //System.out.println("IN TEMP LOCAL VARIABLES="+var);
         this.templocalvariables.add(var);
+    }
+
+
+    public Symbol getParameterInMethod(String methodName,String name){
+        for(var symbol : this.methodParameters.get(methodName)){
+            if(symbol.getName().equals(name))
+                return symbol;
+        }
+        return null;
+    }
+
+    public String parameterNumber(String methodName,String name){
+        var parameters=this.methodParameters.get(methodName);
+        for(int i =1;i<=parameters.size();i++){
+            if(parameters.get(i-1).getName().equals(name))
+                return "$"+i;
+        }
+        return null;
     }
 
     public void addLocalVariables(String methodname){
