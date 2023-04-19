@@ -1,9 +1,11 @@
 import io;
 class Simple {
-
+    int d;
     public int add(int a, int b){
         int c;
+        d=4*5+6;
         c = a + this.constInstr();
+        this.constInstr();
         return c;
     }
 
@@ -12,6 +14,7 @@ class Simple {
         int b;
         int c;
         Simple s;
+        a = this.constInstr();
         a = 20;
         b = 10;
         s = new Simple();

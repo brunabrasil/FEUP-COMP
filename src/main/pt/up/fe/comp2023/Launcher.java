@@ -43,7 +43,7 @@ public class Launcher {
 
         // ... add remaining stages
         JmmAnalyser analyser= new JmmAnalyser();
-        System.out.println(parserResult.getRootNode().toTree());
+        //System.out.println(parserResult.getRootNode().toTree());
         analyser.semanticAnalysis(parserResult);
 
         OllirOptimization ollir=new OllirOptimization();
