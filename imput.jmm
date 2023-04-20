@@ -13,6 +13,7 @@ class Simple {
         h=io.teste();
         c=h.add(a,b);
         a=d;
+        a=c+io.add();
         c.length;
         c=a.length;
         c = a + this.constInstr();
