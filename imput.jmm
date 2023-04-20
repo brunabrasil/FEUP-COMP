@@ -1,7 +1,7 @@
 import io;
 class Simple {
     int d;
-    public int add(int a, int b, Simple j){
+    public int add(int a, int b, Simple j,int h){
         int c;
         io t;
         t=new io();
@@ -9,6 +9,12 @@ class Simple {
         a=io.teste();
         a=io.teste(3+5);
         d=4*5+6;
+        h=this.constInstr();
+        h=io.teste();
+        c=h.add(a,b);
+        a=d;
+        c.length;
+        c=a.length;
         c = a + this.constInstr();
         this.constInstr();
         return c;
