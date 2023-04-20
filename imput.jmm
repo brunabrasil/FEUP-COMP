@@ -5,7 +5,9 @@ class Simple {
         int c;
         io t;
         t=new io();
-        a=io.teste(2);
+        a=io.add();
+        a=io.teste();
+        a=io.teste(3+5);
         d=4*5+6;
         c = a + this.constInstr();
         this.constInstr();
