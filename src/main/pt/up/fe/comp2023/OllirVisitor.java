@@ -396,7 +396,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             ollir.append(String.join("\n", tempList));
         }
 
-        // Is a class method
+
         if(isIntance){
             functionType=this.table.getMethodType(functionName);
             if(needsTemp){
@@ -481,9 +481,53 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String dealWithLength(JmmNode jmmNode, String s) {
         scope="LENGTH";
         String caller=visit(jmmNode.getJmmChild(0));
+        StringBuilder ollir=new StringBuilder();
 
+        var parent=jmmNode.getJmmParent();
+        Boolean needsTemp=false;
 
-        return "";
+        if(!parent.getKind().equals("Expr"))
+            needsTemp=true;
+
+        if(checkInstance(caller)){
+            if(needsTemp){
+                String tempName="temp_"+tempcount;
+                tempcount++;
+                tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(assignType),OllirTemplates.typeTemplate(assignType),OllirTemplates.invokevirtualTemplate(caller,"length",assignType,"")));
+                return tempName+OllirTemplates.typeTemplate(assignType);
+            }
+            ollir.append(OllirTemplates.invokevirtualTemplate(caller,"length",assignType,""));
+        }
+        else {
+            Boolean assing=false;
+            if(parent.getKind().equals("Assignment")){
+                assing=true;
+            }
+            if(needsTemp){
+                String tempName="temp_"+tempcount;
+                tempcount++;
+                if (assing){
+                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(assignType),OllirTemplates.typeTemplate(assignType),OllirTemplates.invokestaticTemplate(caller,"length",assignType,"")));
+                    return tempName+OllirTemplates.typeTemplate(assignType);
+                }
+                else{
+                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.invokestaticTemplate(caller,"length",new Type("void",false),"")));
+                    return tempName+OllirTemplates.typeTemplate(new Type("void",false));
+                }
+            }
+
+            if(assing){
+                ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",assignType,""));
+            }
+            else{
+                ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",new Type("void",false),""));
+            }
+
+        }
+        ollir.append(";\n");
+
+        return ollir.toString();
+
     }
     private Boolean checkInstance(String caller){
         if (this.table.getImports().contains(caller) || this.table.getClassName().equals(caller)) {
