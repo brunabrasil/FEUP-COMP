@@ -147,8 +147,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
     }
 
     private Type dealWithUnaryOp(JmmNode jmmNode, String s) {
-        int line = Integer.valueOf(jmmNode.get("lineStart"));
-        int col = Integer.valueOf(jmmNode.get("colStart"));
+        int line = Integer.parseInt(jmmNode.get("lineStart"));
+        int col = Integer.parseInt(jmmNode.get("colStart"));
 
         Type right = visit(jmmNode.getJmmChild(0),"");
 
