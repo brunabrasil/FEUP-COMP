@@ -137,31 +137,6 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         else{
             methodName = "main";
         }
-        //see if var is a field
-        List<Symbol> fields = table.getFields();
-        if(fields != null){
-            for (int i = 0; i < fields.size(); i++){
-                if(fields.get(i).getName().equals(left)){
-                    if(methodName.equals("main")){
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Fields cannot be used in main method"));
-                    }
-                    leftType = fields.get(i).getType();
-                    break;
-                }
-            }
-        }
-
-        //see if var is a parameter
-        List<Symbol> parameters = table.getParameters(methodName);
-
-        if(parameters != null){
-            for (int i = 0; i < parameters.size(); i++){
-                if(parameters.get(i).getName().equals(left)){
-                    leftType = parameters.get(i).getType();
-                    break;
-                }
-            }
-        }
 
         //see if var is a local variable
         List<Symbol> localVariables = table.getLocalVariables(methodName);
@@ -174,6 +149,37 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
                 }
             }
         }
+        //se nao for uma local variable, é que se vai verificar se é um parametro
+        if(leftType.getName().equals("")){
+            //see if var is a parameter
+            List<Symbol> parameters = table.getParameters(methodName);
+
+            if(parameters != null){
+                for (int i = 0; i < parameters.size(); i++){
+                    if(parameters.get(i).getName().equals(left)){
+                        leftType = parameters.get(i).getType();
+                        break;
+                    }
+                }
+            }
+            //se ainda nao tiver encontrado, é que se vai verificar se é um field
+            if(leftType.getName().equals("")) {
+                //see if var is a field
+                List<Symbol> fields = table.getFields();
+                if(fields != null){
+                    for (int i = 0; i < fields.size(); i++){
+                        if(fields.get(i).getName().equals(left)){
+                            if(methodName.equals("main")){
+                                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Fields cannot be used in main method"));
+                            }
+                            leftType = fields.get(i).getType();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
 
         //check if left (assignee) is superclass and right (assigned) is the current class
         if(leftType.getName().equals(table.getSuper()) && right.getName().equals(table.getClassName())){
@@ -198,8 +204,8 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(table, reports);
         Type child = expressionVisitor.visit(jmmNode.getJmmChild(0), "");
 
-        int line = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
-        int col = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
+        int line = Integer.parseInt(jmmNode.getJmmChild(0).get("lineStart"));
+        int col = Integer.parseInt(jmmNode.getJmmChild(0).get("colStart"));
         if(!child.getName().equals("boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Expressions in conditions (while) must be of type boolean"));
         }
@@ -211,8 +217,8 @@ public class StatementVisitor extends AJmmVisitor<String, Type> {
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(table, reports);
         Type child = expressionVisitor.visit(jmmNode.getJmmChild(0), "");
 
-        int line = Integer.valueOf(jmmNode.getJmmChild(0).get("lineStart"));
-        int col = Integer.valueOf(jmmNode.getJmmChild(0).get("colStart"));
+        int line = Integer.parseInt(jmmNode.getJmmChild(0).get("lineStart"));
+        int col = Integer.parseInt(jmmNode.getJmmChild(0).get("colStart"));
         //Expressions in conditions must return a boolean
         if(!child.getName().equals("boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Expressions in conditions (if) must be of type boolean"));

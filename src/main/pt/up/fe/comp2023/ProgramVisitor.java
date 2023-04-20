@@ -30,7 +30,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
 
     }
 
-
     private Type dealWithMethod(JmmNode jmmNode, String s) {
 
         Type type = new Type("", false);
@@ -85,7 +84,7 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
             }
         }
 
-        return new Type("null", false);
+        return null;
     }
 
 
@@ -94,7 +93,6 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
             if(child.getKind().equals("NormalMethod")||child.getKind().equals("MainMethod")){
                 visit(child, "");
             }
-
         }
         return null;
     }
@@ -106,7 +104,7 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
             }
 
         }
-        return new Type("null", false);
+        return null;
     }
 
 
