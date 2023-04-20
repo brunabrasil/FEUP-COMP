@@ -75,7 +75,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         // IMPORTS
         for(String importstate : this.table.getImports()){
-            ollir.append(String.format("import %s;\n",importstate));
+            ollir.append(String.format("import %s\n",importstate));
         }
         ollir.append("\n");
 
@@ -409,7 +409,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         else {
             Boolean assing=false;
-            if(parent.getKind().equals("Assignment")){
+            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp")){
                 assing=true;
             }
             if(needsTemp){
@@ -500,7 +500,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         else {
             Boolean assing=false;
-            if(parent.getKind().equals("Assignment")){
+            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp")){
                 assing=true;
             }
             if(needsTemp){
