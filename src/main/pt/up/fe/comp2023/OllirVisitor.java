@@ -16,6 +16,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String currentMethodName;
     private Integer tempcount=0;
     private String currentAssignmentType;
+    private Type assignType;
     private List<String> tempList= new ArrayList<>();
     private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","ArrayAssignment");
     public OllirVisitor(JmmSymbolTable table, List<Report> reports){
@@ -219,7 +220,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         StringBuilder ollir = new StringBuilder();
         this.currentAssignmentType=ollirType;
-
+        this.assignType=variable.getType();
         // Expression stores what comes after "="
         String expression=visit(jmmNode.getJmmChild(0),"");
         // Check if temporary variables were created
@@ -246,6 +247,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             }
             else{
                 ollir.append(String.format("%s :=%s %s;\n",ollirVariable,ollirType,expression));
+
             }
 
         }
@@ -406,13 +408,30 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             ollir.append(OllirTemplates.invokevirtualTemplate(caller,functionName,functionType,parameters));
         }
         else {
+            Boolean assing=false;
+            if(parent.getKind().equals("Assignment")){
+                assing=true;
+            }
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
-                tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters)));
-                return tempName+OllirTemplates.typeTemplate(new Type("void",false));
+                if (assing){
+                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(assignType),OllirTemplates.typeTemplate(assignType),OllirTemplates.invokestaticTemplate(caller,functionName,assignType,parameters)));
+                    return tempName+OllirTemplates.typeTemplate(assignType);
+                }
+                else{
+                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters)));
+                    return tempName+OllirTemplates.typeTemplate(new Type("void",false));
+                }
             }
-            ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters));
+
+            if(assing){
+                ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,assignType,parameters));
+            }
+            else{
+                ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters));
+            }
+
         }
         ollir.append(";\n");
 
