@@ -250,14 +250,96 @@ public class JasminGenerator {
         return jasminCode + this.loadElement(obj, varTable) + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertType(var.getType()) +  "\n";
     }
 
-    /*
+
     private String dealWithBINARYOPER(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        instruction.getOperands();
-        return switch (instruction.getUnaryOperation().getOpType()) {
+        return switch (instruction.getOperation().getOpType()) {
             case ADD, SUB, MUL, DIV -> this.dealWithIntOperation(instruction, varTable);
-            case LTH, ANDB, NOTB -> this.dealWithBooleanOperation(instruction, varTable);
+            /*case LTH, ANDB, NOTB -> this.dealWithBooleanOperation(instruction, varTable);*/
             default -> "Error in BinaryOpInstruction";
         };
+    }
+
+    private String dealWithIntOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+        String rightOperand = loadElement(instruction.getRightOperand(), varTable);
+        String operation;
+
+        switch (instruction.getOperation().getOpType()) {
+            case ADD -> operation = "iadd\n";
+            case SUB -> operation = "isub\n";
+            case MUL -> operation = "imul\n";
+            case DIV -> operation = "idiv\n";
+            default -> {
+                return "Error in IntOperation\n";
+            }
+        }
+        return leftOperand + rightOperand + operation;
+    }
+
+    /*
+    private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        OperationType ot = instruction.getUnaryOperation().getOpType();
+        StringBuilder stringBuilder = new StringBuilder();
+
+        switch (instruction.getUnaryOperation().getOpType()) {
+            case LTH, GTE -> {
+                String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+                String rightOperand = loadElement(instruction.getRightOperand(), varTable);
+
+                stringBuilder.append(leftOperand)
+                        .append(rightOperand)
+                        .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+
+                // if_icmp decrements 2, iconst increments 1
+                this.decrementStackCounter(1);
+            }
+            case ANDB -> {
+                // ..., value →
+                // ...
+                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
+
+                // Compare left operand
+                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
+                this.decrementStackCounter(1);
+
+                // Compare right operand
+                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
+                this.decrementStackCounter(1);
+
+                stringBuilder.append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+
+                // iconst
+                this.incrementStackCounter(1);
+            }
+            case NOTB -> {
+                String operand = loadElement(instruction.getLeftOperand(), varTable);
+
+                stringBuilder.append(operand)
+                        .append("ifne ").append(this.getTrueLabel()).append("\n")
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+
+                // No need to change stack, load increments 1, ifne would dec.1 and iconst would inc.1
+            }
+            default -> {
+                return "Error in BooleansOperations\n";
+            }
+        }
+
+        this.conditional++;
+        return stringBuilder.toString();
     }*/
 
 
