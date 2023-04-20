@@ -75,7 +75,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         // IMPORTS
         for(String importstate : this.table.getImports()){
-            ollir.append(String.format("import %s\n",importstate));
+            ollir.append(String.format("import %s;\n",importstate));
         }
         ollir.append("\n");
 
