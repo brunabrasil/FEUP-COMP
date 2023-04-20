@@ -75,7 +75,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         // IMPORTS
         for(String importstate : this.table.getImports()){
-            ollir.append(String.format("import %s;\n",importstate));
+            ollir.append(String.format("import %s\n",importstate));
         }
         ollir.append("\n");
 
@@ -397,7 +397,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
 
         // Is a class method
-        if(this.table.getMethods().contains(functionName)){
+        if(this.table.getMethods().contains(functionName) && !this.table.getImports().contains(caller)){
             functionType=this.table.getMethodType(functionName);
             if(needsTemp){
                 String tempName="temp_"+tempcount;
