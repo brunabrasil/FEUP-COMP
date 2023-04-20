@@ -42,7 +42,7 @@ public class JasminGenerator {
         for (Method m : classUnit.getMethods()) {
 
             strBuilder.append(this.addMethodHeader(m));
-            
+
             String instructions = this.addMethodInstructions(m);
 
 
@@ -165,9 +165,8 @@ public class JasminGenerator {
             case GETFIELD ->
                     stringBuilder.append(dealWithGETFIELD((GetFieldInstruction) instruction, varTable)).toString();
             case UNARYOPER -> "Deal with '!' in correct form";
-            /*
             case BINARYOPER ->
-                    stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();*/
+                    stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
             case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
             default -> "Error";
         };
@@ -196,12 +195,10 @@ public class JasminGenerator {
                     stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((ClassType) instruction.getFirstArg().getType()).getName());
             case invokestatic ->
                     stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((Operand) instruction.getFirstArg()).getName());
-                /*
-            case NEW:
+            case NEW ->
                 stringBuilder += this.dealWithNewObject(instruction, varTable);
-                break;*/
             default -> {
-                return "Erro in CallInstruction";
+                return "Error in CallInstruction";
             }
         }
 
@@ -254,9 +251,20 @@ public class JasminGenerator {
     private String dealWithBINARYOPER(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         return switch (instruction.getOperation().getOpType()) {
             case ADD, SUB, MUL, DIV -> this.dealWithIntOperation(instruction, varTable);
-            /*case LTH, ANDB, NOTB -> this.dealWithBooleanOperation(instruction, varTable);*/
             default -> "Error in BinaryOpInstruction";
         };
+    }
+
+    private String dealWithNewObject(CallInstruction instruction, HashMap<String, Descriptor> varTable){
+        Element e = instruction.getFirstArg();
+        String stringBuilder = "";
+
+        if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
+
+            stringBuilder += "new " + this.getOjectClassName(((Operand)e).getName()) + "\ndup\n";
+        }
+
+        return stringBuilder;
     }
 
     private String dealWithIntOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -275,72 +283,6 @@ public class JasminGenerator {
         }
         return leftOperand + rightOperand + operation;
     }
-
-    /*
-    private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        OperationType ot = instruction.getUnaryOperation().getOpType();
-        StringBuilder stringBuilder = new StringBuilder();
-
-        switch (instruction.getUnaryOperation().getOpType()) {
-            case LTH, GTE -> {
-                String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
-                String rightOperand = loadElement(instruction.getRightOperand(), varTable);
-
-                stringBuilder.append(leftOperand)
-                        .append(rightOperand)
-                        .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
-                        .append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
-
-                // if_icmp decrements 2, iconst increments 1
-                this.decrementStackCounter(1);
-            }
-            case ANDB -> {
-                // ..., value →
-                // ...
-                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
-
-                // Compare left operand
-                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
-                this.decrementStackCounter(1);
-
-                // Compare right operand
-                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
-                this.decrementStackCounter(1);
-
-                stringBuilder.append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
-
-                // iconst
-                this.incrementStackCounter(1);
-            }
-            case NOTB -> {
-                String operand = loadElement(instruction.getLeftOperand(), varTable);
-
-                stringBuilder.append(operand)
-                        .append("ifne ").append(this.getTrueLabel()).append("\n")
-                        .append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
-
-                // No need to change stack, load increments 1, ifne would dec.1 and iconst would inc.1
-            }
-            default -> {
-                return "Error in BooleansOperations\n";
-            }
-        }
-
-        this.conditional++;
-        return stringBuilder.toString();
-    }*/
 
 
     private String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType callType, String className){
