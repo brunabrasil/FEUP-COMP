@@ -384,7 +384,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             needsTemp=true;
 
         String caller= visit(jmmNode.getJmmChild(0));
-
+        Boolean isIntance=checkInstance(caller);
         String functionName=jmmNode.get("name");
 
         Type functionType;
@@ -397,7 +397,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
 
         // Is a class method
-        if(this.table.getMethods().contains(functionName) && !this.table.getImports().contains(caller)){
+        if(isIntance){
             functionType=this.table.getMethodType(functionName);
             if(needsTemp){
                 String tempName="temp_"+tempcount;
@@ -484,6 +484,16 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
 
         return "";
+    }
+    private Boolean checkInstance(String caller){
+        if (this.table.getImports().contains(caller) || this.table.getClassName().equals(caller)) {
+            return false;
+        }
+        if(this.table.getSuper()!=null){
+            if(this.table.getSuper().equals(caller))
+                return false;
+        }
+        return  true;
     }
 
 
