@@ -10,14 +10,14 @@ public class JasminGenerator {
     private int stackCounter;
     private int maxCounter;
     private int conditional;
-    private ClassUnit classUnit;    
+    private ClassUnit classUnit;
 
     public JasminGenerator(ClassUnit classUnit) {
         this.classUnit = classUnit;
     }
 
     public String dealWithClass() {
-        StringBuilder strBuilder = new StringBuilder("");
+        StringBuilder strBuilder = new StringBuilder();
 
         // Declaration of the class
         strBuilder.append(".class ");
@@ -65,22 +65,28 @@ public class JasminGenerator {
         }
 
         switch (elementType) {
-            case INT32:
+            case INT32 -> {
                 return strBuilder + "I";
-            case BOOLEAN:
+            }
+            case BOOLEAN -> {
                 return strBuilder + "Z";
-            case STRING:
+            }
+            case STRING -> {
                 return strBuilder + "Ljava/lang/String;";
-            case OBJECTREF:
+            }
+            case OBJECTREF -> {
                 String className = ((ClassType) type).getName();
                 return strBuilder + "L" + this.getOjectClassName(className) + ";";
-            case CLASS:
-                className = ((ClassType) type).getName();
-                return "L" + this.getOjectClassName(className) + ";";
-            case VOID:
+            }
+            case CLASS -> {
+                return "CLASS";
+            }
+            case VOID -> {
                 return "V";
-            default:
+            }
+            default -> {
                 return "Error converting ElementType";
+            }
         }
     }
 
@@ -114,7 +120,7 @@ public class JasminGenerator {
 
         // Parameters type
         strBuilder.append(method.getMethodName());
-        
+
         strBuilder.append("(");
         for (Element el: method.getParams()) {
             strBuilder.append(convertType(el.getType()));
@@ -193,7 +199,7 @@ public class JasminGenerator {
             case invokestatic ->
                     stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((Operand) instruction.getFirstArg()).getName());
             case NEW ->
-                stringBuilder += this.dealWithNewObject(instruction, varTable);
+                    stringBuilder += this.dealWithNewObject(instruction, varTable);
             default -> {
                 return "Error in CallInstruction";
             }
