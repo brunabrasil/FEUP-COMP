@@ -41,14 +41,13 @@ public class JasminGenerator {
 
         // Declaration of the methods
         for (Method m : classUnit.getMethods()) {
+            this.maxCounter = 0;
 
             strBuilder.append(this.addMethodHeader(m));
-
             String instructions = this.addMethodInstructions(m);
 
-
             if (!m.isConstructMethod()) {
-                // strBuilder.append(this.dealWithMethodLimits(m));
+                strBuilder.append(this.dealWithMethodLimits(m));
                 strBuilder.append(instructions);
             }
         }
@@ -436,5 +435,16 @@ public class JasminGenerator {
         } else {
             return " " + virtualReg;
         }
+    }
+
+    private String dealWithMethodLimits(Method method) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        int localCount = method.getVarTable().size();
+        if (!method.isStaticMethod()) localCount++;
+        stringBuilder.append(".limit locals ").append(localCount).append("\n");
+        stringBuilder.append(".limit stack ").append(maxCounter).append("\n");
+
+        return stringBuilder.toString();
     }
 }
