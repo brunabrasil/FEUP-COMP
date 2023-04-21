@@ -2,108 +2,146 @@ package pt.up.fe.comp2023;
 
 import org.specs.comp.ollir.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JasminGenerator {
-    private final ClassUnit classUnit;
+
+    private int stackCounter;
+    private int maxCounter;
     private int conditional;
-    private int stack_counter;
-    private int max_counter;
+    private ClassUnit classUnit;    
 
     public JasminGenerator(ClassUnit classUnit) {
         this.classUnit = classUnit;
     }
 
     public String dealWithClass() {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder strBuilder = new StringBuilder("");
 
-        // class declaration
-        stringBuilder.append(".class ").append(classUnit.getClassName()).append("\n");
+        // Declaration of the class
+        strBuilder.append(".class ");
+        strBuilder.append(classUnit.getClassName()).append("\n");
 
-        // extends declaration
+        // Declaration of the extends
         if (classUnit.getSuperClass() != null) {
-            stringBuilder.append(".super ").append(classUnit.getSuperClass()).append("\n");
+            strBuilder.append(".super ");
+            strBuilder.append(classUnit.getSuperClass()).append("\n");
         }
         else {
-            stringBuilder.append(".super java/lang/Object\n");
+            strBuilder.append(".super java/lang/Object\n");
         }
 
-        // fields declaration
-        for (Field f : classUnit.getFields()) {
-            stringBuilder.append(".field '").append(f.getFieldName()).append("' ").append(this.getStringType(f.getFieldType())).append("\n");
+        // Declaration of the fields
+        for (Field fi: classUnit.getFields()) {
+            strBuilder.append(".field ");
+            strBuilder.append(fi.getFieldName()).append("' ");
+            strBuilder.append(this.convertType(fi.getFieldType())).append("\n");
         }
 
-        for (Method method : classUnit.getMethods()) {
-            this.stack_counter = 0;
-            this.max_counter = 0;
+        // Declaration of the methods
+        for (Method m : classUnit.getMethods()) {
 
-            stringBuilder.append(this.dealWithMethodHeader(method));
-            String instructions = this.dealtWithMethodInstructions(method);
-            if (!method.isConstructMethod()) {
-                // stringBuilder.append(this.dealWithMethodLimits(method));
-                stringBuilder.append(instructions);
+            strBuilder.append(this.addMethodHeader(m));
+
+            String instructions = this.addMethodInstructions(m);
+
+
+            if (!m.isConstructMethod()) {
+                // strBuilder.append(this.dealWithMethodLimits(m));
+                strBuilder.append(instructions);
             }
         }
 
-        return stringBuilder.toString();
+        return strBuilder.toString();
     }
 
-    private String dealWithMethodHeader(Method method) {
+    private String convertType(Type type) {
+        ElementType elementType = type.getTypeOfElement();
+        String strBuilder = "";
+
+        if (elementType == ElementType.ARRAYREF) {
+            elementType = ((ArrayType) type).getTypeOfElements();
+            strBuilder += "[";
+        }
+
+        switch (elementType) {
+            case INT32:
+                return strBuilder + "I";
+            case BOOLEAN:
+                return strBuilder + "Z";
+            case STRING:
+                return strBuilder + "Ljava/lang/String;";
+            case OBJECTREF:
+                String className = ((ClassType) type).getName();
+                return strBuilder + "L" + this.getOjectClassName(className) + ";";
+            case CLASS:
+                className = ((ClassType) type).getName();
+                return "L" + this.getOjectClassName(className) + ";";
+            case VOID:
+                return "V";
+            default:
+                return "Error converting ElementType";
+        }
+    }
+
+    private String getOjectClassName(String className) {
+        for (String i : classUnit.getImports()) {
+            if (i.endsWith("." + className)) {
+                return i.replaceAll("\\.", "/");
+            }
+        }
+        return className;
+    }
+
+    private String addMethodHeader(Method method) {
         if (method.isConstructMethod()) {
-            String classSuper;
+            String classSuper = "java/lang/Object";
             if (classUnit.getSuperClass() != null) {
                 classSuper = classUnit.getSuperClass();
-            }else{
-                classSuper = "java/lang/Object";
             }
 
             return "\n.method public <init>()V\naload_0\ninvokespecial " + classSuper +  ".<init>()V\nreturn\n.end method\n";
         }
 
-        StringBuilder stringBuilder = new StringBuilder("\n.method").append(" ").append(method.getMethodAccessModifier().name().toLowerCase()).append(" ");
+        StringBuilder strBuilder = new StringBuilder("\n.method").append(" ").append(method.getMethodAccessModifier().name().toLowerCase()).append(" ");
 
-        if (method.isStaticMethod()) {
-            stringBuilder.append("static ");
+        if (method.isFinalMethod()) {
+            strBuilder.append("final ");
         }
-        else if (method.isFinalMethod()) {
-            stringBuilder.append("final ");
+        else if (method.isStaticMethod()) {
+            strBuilder.append("static ");
         }
 
         // Parameters type
-        stringBuilder.append(method.getMethodName()).append("(");
-        for (Element element: method.getParams()) {
-            stringBuilder.append(getStringType(element.getType()));
+        strBuilder.append(method.getMethodName());
+        
+        strBuilder.append("(");
+        for (Element el: method.getParams()) {
+            strBuilder.append(convertType(el.getType()));
         }
+        strBuilder.append(")");
+
         // Return type
-        stringBuilder.append(")").append(this.getStringType(method.getReturnType())).append("\n");
+        strBuilder.append(this.convertType(method.getReturnType()));
+        strBuilder.append("\n");
 
-        return stringBuilder.toString();
+        return strBuilder.toString();
     }
 
-    private String dealWithMethodLimits(Method method) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        int localCount = method.getVarTable().size();
-        if (!method.isStaticMethod()) localCount++;
-        stringBuilder.append(".limit locals ").append(localCount).append("\n");
-        stringBuilder.append(".limit stack ").append(max_counter).append("\n");
-
-        return stringBuilder.toString();
-    }
-
-    private String dealtWithMethodInstructions(Method method) {
-        StringBuilder stringBuilder = new StringBuilder();
+    private String addMethodInstructions(Method method) {
+        StringBuilder strBuilder = new StringBuilder();
         method.getVarTable();
-        for (Instruction instruction : method.getInstructions()) {
-            stringBuilder.append(dealWithInstruction(instruction, method.getVarTable(), method.getLabels()));
-            if (instruction instanceof CallInstruction && ((CallInstruction) instruction).getReturnType().getTypeOfElement() != ElementType.VOID) {
-                stringBuilder.append("pop\n");
-                this.decrementStackCounter(1);
+
+        for (Instruction i : method.getInstructions()) {
+            strBuilder.append(dealWithInstruction(i, method.getVarTable(), method.getLabels()));
+            if (i instanceof CallInstruction && ((CallInstruction) i).getReturnType().getTypeOfElement() != ElementType.VOID) {
+                strBuilder.append("pop\n");
             }
         }
 
-        stringBuilder.append("\n.end method\n");
-        return stringBuilder.toString();
+        strBuilder.append("\n.end method\n");
+        return strBuilder.toString();
     }
 
     private String dealWithInstruction(Instruction instruction, HashMap<String, Descriptor> varTable, HashMap<String, Instruction> methodLabels) {
@@ -114,56 +152,117 @@ public class JasminGenerator {
             }
         }
 
-        return switch (instruction.getInstType()) {
-            case ASSIGN ->
-                    stringBuilder.append(dealWithAssignment((AssignInstruction) instruction, varTable)).toString();
-            case NOPER ->
-                    stringBuilder.append(dealWithSingleOpInstruction((SingleOpInstruction) instruction, varTable)).toString();
-            case BINARYOPER ->
-                    stringBuilder.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
-            case CALL ->
-                    stringBuilder.append(dealWithCallInstruction((CallInstruction) instruction, varTable)).toString();
+        InstructionType inst = instruction.getInstType();
+
+        return switch (inst) {
+            case ASSIGN -> stringBuilder.append(dealWithASSIGN((AssignInstruction) instruction, varTable)).toString();
+            case CALL -> stringBuilder.append(dealWithCALL((CallInstruction) instruction, varTable)).toString();
+            case RETURN -> stringBuilder.append(dealWithRETURN((ReturnInstruction) instruction, varTable)).toString();
             case PUTFIELD ->
-                    stringBuilder.append(dealWithPutFieldInstruction((PutFieldInstruction) instruction, varTable)).toString();
+                    stringBuilder.append(dealWithPUTFIELD((PutFieldInstruction) instruction, varTable)).toString();
             case GETFIELD ->
-                    stringBuilder.append(dealWithGetFieldInstruction((GetFieldInstruction) instruction, varTable)).toString();
-            case RETURN ->
-                    stringBuilder.append(dealWithReturnInstruction((ReturnInstruction) instruction, varTable)).toString();
-            default -> "Error in Instructions";
+                    stringBuilder.append(dealWithGETFIELD((GetFieldInstruction) instruction, varTable)).toString();
+            case BINARYOPER ->
+                    stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
+            case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
+            default -> "Error";
         };
     }
 
-    private String dealWithAssignment(AssignInstruction inst, HashMap<String, Descriptor> varTable) {
+    private String dealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
-        Operand operand = (Operand) inst.getDest();
-        if (operand instanceof ArrayOperand) {
-            ArrayOperand aoperand = (ArrayOperand) operand;
+        Operand operand = (Operand) instruction.getDest();
 
-            // Load array
-            stringBuilder += String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable));
-            this.incrementStackCounter(1);
+        stringBuilder += dealWithInstruction(instruction.getRhs(), varTable, new HashMap<String, Instruction>());
 
-            // Load index
-            stringBuilder += loadElement(aoperand.getIndexOperands().get(0), varTable);
-        }
-
-        stringBuilder += dealWithInstruction(inst.getRhs(), varTable, new HashMap<>());
-        if(!(operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF) && inst.getRhs() instanceof CallInstruction)) { //if it's a new object call does not store yet
+        // If it is an object reference we should not update the table
+        if(!(operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF) && instruction.getRhs() instanceof CallInstruction)) {
             stringBuilder += this.storeElement(operand, varTable);
         }
 
         return stringBuilder;
     }
 
-    private String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        return loadElement(instruction.getSingleOperand(), varTable);
+    private String dealWithCALL(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String stringBuilder = "";
+        CallType callType = instruction.getInvocationType();
+
+        switch (callType) {
+            case invokespecial, invokevirtual ->
+                    stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((ClassType) instruction.getFirstArg().getType()).getName());
+            case invokestatic ->
+                    stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((Operand) instruction.getFirstArg()).getName());
+            case NEW ->
+                stringBuilder += this.dealWithNewObject(instruction, varTable);
+            default -> {
+                return "Error in CallInstruction";
+            }
+        }
+
+        return stringBuilder;
     }
 
-    private String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+    private String dealWithRETURN(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
+        if(!instruction.hasReturnValue()) return "return";
+        String returnString = "";
+
+        switch (instruction.getOperand().getType().getTypeOfElement()) {
+            case VOID -> returnString = "return";
+            case INT32, BOOLEAN -> {
+                returnString = loadElement(instruction.getOperand(), varTable);
+                returnString += "ireturn";
+            }
+            case OBJECTREF -> {
+                returnString = loadElement(instruction.getOperand(), varTable);
+                returnString += "areturn";
+            }
+            default -> {
+            }
+        }
+
+        return returnString;
+    }
+
+    private String dealWithPUTFIELD(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String stringBuilder = "";
+        Operand obj = (Operand)instruction.getFirstOperand();
+        Operand var = (Operand)instruction.getSecondOperand();
+        Element value = instruction.getThirdOperand();
+
+        stringBuilder += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
+
+        stringBuilder += this.loadElement(value, varTable); //store const element on stack
+
+        return stringBuilder + "putfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertType(var.getType()) + "\n";
+    }
+
+    private String dealWithGETFIELD(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String jasminCode = "";
+        Operand obj = (Operand)instruction.getFirstOperand();
+        Operand var = (Operand)instruction.getSecondOperand();
+
+        return jasminCode + this.loadElement(obj, varTable) + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertType(var.getType()) +  "\n";
+    }
+
+
+    private String dealWithBINARYOPER(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         return switch (instruction.getOperation().getOpType()) {
             case ADD, SUB, MUL, DIV -> this.dealWithIntOperation(instruction, varTable);
+            case LTH, GTE, ANDB, NOTB -> this.dealWithBooleanOperation(instruction, varTable);
             default -> "Error in BinaryOpInstruction";
         };
+    }
+
+    private String dealWithNewObject(CallInstruction instruction, HashMap<String, Descriptor> varTable){
+        Element e = instruction.getFirstArg();
+        String stringBuilder = "";
+
+        if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
+
+            stringBuilder += "new " + this.getOjectClassName(((Operand)e).getName()) + "\ndup\n";
+        }
+
+        return stringBuilder;
     }
 
     private String dealWithIntOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -180,33 +279,80 @@ public class JasminGenerator {
                 return "Error in IntOperation\n";
             }
         }
-
-        this.decrementStackCounter(1);
         return leftOperand + rightOperand + operation;
     }
 
-    private String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = "";
-        CallType callType = instruction.getInvocationType();
+    private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        OperationType ot = instruction.getOperation().getOpType();
+        StringBuilder stringBuilder = new StringBuilder();
 
-        switch (callType) {
-            case invokespecial:
-                stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((ClassType)instruction.getFirstArg().getType()).getName());
-                break;
-            case invokevirtual:
-                stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((ClassType)instruction.getFirstArg().getType()).getName());
-                break;
-            case invokestatic:
-                stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((Operand)instruction.getFirstArg()).getName());
-                break;
-            case NEW:
-                stringBuilder += this.dealWithNewObject(instruction);
-                break;
-            default:
-                return "Erro in CallInstruction";
+        switch (instruction.getOperation().getOpType()) {
+            case LTH, GTE -> {
+
+                String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+                String rightOperand = loadElement(instruction.getRightOperand(), varTable);
+
+                stringBuilder.append(leftOperand)
+                        .append(rightOperand)
+                        .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+            }
+            case ANDB -> {
+
+                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
+
+                // Compare left operand
+                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
+
+                // Compare right operand
+                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
+
+                stringBuilder.append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+            }
+            case NOTB -> {
+                String operand = loadElement(instruction.getLeftOperand(), varTable);
+
+                stringBuilder.append(operand)
+                        .append("ifne ").append(this.getTrueLabel()).append("\n")
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+
+                // No need to change stack, load increments 1, ifne would dec.1 and iconst would inc.1
+            }
+            default -> {
+                return "Error in BooleansOperations\n";
+            }
         }
 
-        return stringBuilder;
+        this.conditional++;
+        return stringBuilder.toString();
+    }
+
+    private String getTrueLabel() {
+        return "myTrue" + this.conditional;
+    }
+
+    private String getEndIfLabel() {
+        return "myEndIf" + this.conditional;
+    }
+
+    private String dealWithRelationalOperation(OperationType ot, String trueLabel) {
+        return switch (ot) {
+            case LTH -> String.format("if_icmpge %s\n", trueLabel);
+            case GTE -> String.format("if_icmplt %s\n", trueLabel);
+            default -> "Error in RelationalOperations\n";
+        };
     }
 
     private String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType callType, String className){
@@ -219,22 +365,12 @@ public class JasminGenerator {
             stringBuilder.append(this.loadElement(instruction.getFirstArg(), varTable));
         }
 
-        int num_params = 0;
         for (Element element : instruction.getListOfOperands()) {
             stringBuilder.append(this.loadElement(element, varTable));
-            parameters.append(this.getStringType(element.getType()));
-            num_params++;
+            parameters.append(this.convertType(element.getType()));
         }
 
-        if (!instruction.getInvocationType().equals(CallType.invokestatic)) {
-            num_params += 1;
-        }
-        this.decrementStackCounter(num_params);
-        if (instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
-            this.incrementStackCounter(1);
-        }
-
-        stringBuilder.append(callType.name()).append(" ").append(this.getObjectClassName(className)).append(".").append(functionLiteral.replace("\"", "")).append("(").append(parameters).append(")").append(this.getStringType(instruction.getReturnType())).append("\n");
+        stringBuilder.append(callType.name()).append(" ").append(this.getOjectClassName(className)).append(".").append(functionLiteral.replace("\"", "")).append("(").append(parameters).append(")").append(this.convertType(instruction.getReturnType())).append("\n");
 
         if (functionLiteral.equals("\"<init>\"") && !className.equals("this")) {
             stringBuilder.append(this.storeElement((Operand) instruction.getFirstArg(), varTable));
@@ -243,146 +379,30 @@ public class JasminGenerator {
         return stringBuilder.toString();
     }
 
-    private String dealWithNewObject(CallInstruction instruction){
-        Element e = instruction.getFirstArg();
-        String stringBuilder = "";
-
-        if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
-            this.incrementStackCounter(2);
-
-            stringBuilder += "new " + this.getObjectClassName(((Operand)e).getName()) + "\ndup\n";
-        }
-
-        return stringBuilder;
-    }
-
-    private String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = "";
-        Operand obj = (Operand)instruction.getFirstOperand();
-        Operand var = (Operand)instruction.getSecondOperand();
-        Element value = instruction.getThirdOperand();
-
-        stringBuilder += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
-
-        stringBuilder += this.loadElement(value, varTable); //store const element on stack
-
-        this.decrementStackCounter(2);
-
-        return stringBuilder + "putfield " + classUnit.getClassName() + "/" + var.getName() + " " + getStringType(var.getType()) + "\n";
-    }
-
-    private String dealWithGetFieldInstruction(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String jasminCode = "";
-        Operand obj = (Operand)instruction.getFirstOperand();
-        Operand var = (Operand)instruction.getSecondOperand();
-
-        jasminCode += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
-
-        return jasminCode + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + getStringType(var.getType()) +  "\n";
-    }
-
-    private String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
-        if(!instruction.hasReturnValue()) return "return";
-        String returnString = "";
-
-        switch (instruction.getOperand().getType().getTypeOfElement()) {
-            case VOID -> returnString = "return";
-            case INT32, BOOLEAN -> {
-                returnString = loadElement(instruction.getOperand(), varTable);
-
-                this.decrementStackCounter(1);
-                returnString += "ireturn";
-            }
-            case OBJECTREF -> {
-                returnString = loadElement(instruction.getOperand(), varTable);
-
-                this.decrementStackCounter(1);
-                returnString += "areturn";
-            }
-            default -> {
-            }
-        }
-
-        return returnString;
-    }
-
-    private String getStringType(Type type) {
-        ElementType elementType = type.getTypeOfElement();
-        String stringBuilder = "";
-
-        if (elementType == ElementType.ARRAYREF) {
-            elementType = ((ArrayType) type).getTypeOfElements();
-            stringBuilder += "[";
-        }
-
-        switch (elementType) {
-            case INT32 -> {
-                return stringBuilder + "I";
-            }
-            case BOOLEAN -> {
-                return stringBuilder + "Z";
-            }
-            case STRING -> {
-                return stringBuilder + "Ljava/lang/String;";
-            }
-            case OBJECTREF -> {
-                String className = ((ClassType) type).getName();
-                return stringBuilder + "L" + this.getObjectClassName(className) + ";";
-            }
-            case CLASS -> {
-                return "CLASS";
-            }
-            case VOID -> {
-                return "V";
-            }
-            default -> {
-                return "Error converting ElementType";
-            }
-        }
-    }
-
-    private String getObjectClassName(String className) {
-        for (String _import : classUnit.getImports()) {
-            if (_import.endsWith("." + className)) {
-                return _import.replaceAll("\\.", "/");
-            }
-        }
-        return className;
-    }
-
     private String loadElement(Element element, HashMap<String, Descriptor> varTable) {
         if (element instanceof LiteralElement) {
             String num = ((LiteralElement) element).getLiteral();
-            this.incrementStackCounter(1);
-            return this.selectConstType(num) + "\n";
-        }
-        else if (element instanceof ArrayOperand operand) {
 
-            // Load array
-            String stringBuilder = String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
-            this.incrementStackCounter(1);
-
-            // Load index
-            stringBuilder += loadElement(operand.getIndexOperands().get(0), varTable);
-
-            this.decrementStackCounter(1);
-            return stringBuilder + "iaload\n";
+            return (Integer.parseInt(num) < -1 || Integer.parseInt(num) > 5 ?
+                    Integer.parseInt(num) < -128 || Integer.parseInt(num) > 127 ?
+                            Integer.parseInt(num) < -32768 || Integer.parseInt(num) > 32767 ?
+                                    "ldc " + num :
+                                    "sipush " + num :
+                            "bipush " + num :
+                    "iconst_" + num) + "\n";
         }
         else if (element instanceof Operand operand) {
             switch (operand.getType().getTypeOfElement()) {
                 case THIS -> {
-                    this.incrementStackCounter(1);
                     return "aload_0\n";
                 }
                 case INT32, BOOLEAN -> {
-                    this.incrementStackCounter(1);
                     return String.format("iload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
                 case OBJECTREF -> {
-                    this.incrementStackCounter(1);
                     return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
-                case CLASS -> {
+                case CLASS -> { //TODO deal with class
                     return "";
                 }
                 default -> {
@@ -395,18 +415,12 @@ public class JasminGenerator {
     }
 
     private String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
-        if (operand instanceof ArrayOperand) {
-            this.decrementStackCounter(3);
-            return "iastore\n";
-        }
 
         switch (operand.getType().getTypeOfElement()) {
             case INT32, BOOLEAN -> {
-                this.decrementStackCounter(1);
                 return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             case OBJECTREF -> {
-                this.decrementStackCounter(1);
                 return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             default -> {
@@ -417,36 +431,10 @@ public class JasminGenerator {
 
     private String getVirtualReg(String varName, HashMap<String, Descriptor> varTable) {
         int virtualReg = varTable.get(varName).getVirtualReg();
-        if (virtualReg > 3) {
+        if (virtualReg <= 3) {
+            return "_" + virtualReg;
+        } else {
             return " " + virtualReg;
         }
-        return "_" + virtualReg;
-    }
-
-    private String getTrueLabel() {
-        return "myTrue" + this.conditional;
-    }
-
-    private String getEndIfLabel() {
-        return "myEndIf" + this.conditional;
-    }
-
-    private String selectConstType(String literal){
-        return Integer.parseInt(literal) < -1 || Integer.parseInt(literal) > 5 ?
-                Integer.parseInt(literal) < -128 || Integer.parseInt(literal) > 127 ?
-                        Integer.parseInt(literal) < -32768 || Integer.parseInt(literal) > 32767 ?
-                                "ldc " + literal :
-                                "sipush " + literal :
-                        "bipush " + literal :
-                "iconst_" + literal;
-    }
-
-    private void incrementStackCounter(int add) {
-        this.stack_counter += add;
-        if (this.stack_counter > this.max_counter) this.max_counter = stack_counter;
-    }
-
-    private void decrementStackCounter(int sub) {
-        this.stack_counter -= sub;
     }
 }
