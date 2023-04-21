@@ -132,11 +132,8 @@ public class JasminGenerator {
         StringBuilder strBuilder = new StringBuilder();
         method.getVarTable();
 
-        HashMap varTable = method.getVarTable();
-        HashMap labels = method.getLabels();
-
         for (Instruction i : method.getInstructions()) {
-            strBuilder.append(dealWithInstruction(i, varTable, labels));
+            strBuilder.append(dealWithInstruction(i, method.getVarTable(), method.getLabels()));
             if (i instanceof CallInstruction && ((CallInstruction) i).getReturnType().getTypeOfElement() != ElementType.VOID) {
                 strBuilder.append("pop\n");
             }
@@ -164,7 +161,6 @@ public class JasminGenerator {
                     stringBuilder.append(dealWithPUTFIELD((PutFieldInstruction) instruction, varTable)).toString();
             case GETFIELD ->
                     stringBuilder.append(dealWithGETFIELD((GetFieldInstruction) instruction, varTable)).toString();
-            case UNARYOPER -> "Deal with '!' in correct form";
             case BINARYOPER ->
                     stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
             case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
