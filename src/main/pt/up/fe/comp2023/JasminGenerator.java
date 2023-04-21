@@ -41,6 +41,7 @@ public class JasminGenerator {
 
         // Declaration of the methods
         for (Method m : classUnit.getMethods()) {
+            this.stackCounter = 0;
             this.maxCounter = 0;
 
             strBuilder.append(this.addMethodHeader(m));
