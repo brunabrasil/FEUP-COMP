@@ -1,22 +1,18 @@
-import io;
-class Simple {
-    public int getValue(bool u){
-        return 0;
+import Dummy;
+
+class NoArgs{
+
+    public int add(int c){
+    return 1;
     }
-    public int foo(){
+
+    public Dummy bar(){
         int a;
-        bool b;
+        Dummy c;
+        this.add(c.bar());
 
-        a = 1 * a.getValue(a.getValue(io.teste()));
-        //a = 1 + i.genInt();
-        b = io.genBool();
 
-        return 0;
+        return c;
     }
 
-
-
-    public static void main(String[] args){
-
-    }
 }

@@ -179,8 +179,16 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 continue;
             else if(statements.contains(child.getKind()))
                 body.add( visit(child,""));
-            else
-                returnString+=visit(child,"");
+            else{
+                String temp=visit(child,"");
+                if(temp=="this"){
+                    returnString+=temp+OllirTemplates.typeTemplate(this.table.getReturnType(methodName));
+                }
+                else{
+                    returnString+=temp;
+                }
+            }
+
         }
         returnString+=";";
 
@@ -359,8 +367,12 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String temp=visit(jmmNode.getJmmChild(0));
 
         if(tempList.size()>0){
-            ollir.append(String.join("\n", tempList));
-            ollir.append("\n");
+            //if(tempNotContained(temp)){
+                ollir.append("HELLLO\n");
+                ollir.append(String.join("\n", tempList));
+                ollir.append("\n");
+
+            //}
         }
         tempList.clear();
         ollir.append(temp);
@@ -371,12 +383,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String dealWithCallMethod(JmmNode jmmNode, String s) {
 
         StringBuilder ollir = new StringBuilder();
-
+        System.out.printf("TEMPNUMBER:"+tempcount);
         var parent=jmmNode.getJmmParent();
         Boolean needsTemp=false;;
+        System.out.println("Parent kind:"+parent.getKind());
         if(!parent.getKind().equals("Expr"))
             needsTemp=true;
-
+        System.out.println("NEEDSTEMP:"+needsTemp+" NODE KIND:"+jmmNode.getKind());
         String caller= visit(jmmNode.getJmmChild(0));
         Boolean isIntance=checkInstance(caller);
         String functionName=jmmNode.get("name");
@@ -386,13 +399,28 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         var children=jmmNode.getChildren();
 
         String parameters=getParametersList(children,functionName);
+
         if(tempList.size()>0){
             ollir.append(String.join("\n", tempList));
         }
 
 
+        //ollir=removeRepeated(ollir);
+
         if(isIntance){
-            functionType=this.table.getMethodType(functionName);
+            // Its either a normal type like int or the own class type
+            if(isClassVariable(caller))
+                functionType=this.table.getMethodType(functionName);
+            // Its a variable thats from an import or from the extended class
+            else{
+                functionType=new Type("void",false);
+                if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
+                    functionType=assignType;
+                    if(parent.getKind().equals("CallMethod")){
+                        functionType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
+                    }
+                }
+            }
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
@@ -402,17 +430,21 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             ollir.append(OllirTemplates.invokevirtualTemplate(caller,functionName,functionType,parameters));
         }
         else {
-            Boolean assing=false;
+            Boolean needsType=false;
             Type returnType=assignType;
             if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
-                assing=true;
-                if(parent.getKind().equals("CallMethod"))
+                needsType=true;
+                if(parent.getKind().equals("CallMethod")){
                     returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
+                }
+            }
+            if(this.table.getClassName().equals(caller)){
+                returnType=this.table.getMethodType(functionName);
             }
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
-                if (assing){
+                if (needsType){
                     tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokestaticTemplate(caller,functionName,returnType,parameters)));
                     return tempName+OllirTemplates.typeTemplate(returnType);
                 }
@@ -422,11 +454,17 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 }
             }
 
-            if(assing){
+            if(needsType){
                 ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,returnType,parameters));
             }
             else{
-                ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters));
+                if(this.table.getClassName().equals(caller)){
+                    ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,returnType,parameters));
+                }
+                else{
+                    ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters));
+                }
+
             }
 
         }
@@ -504,17 +542,17 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             ollir.append(OllirTemplates.invokevirtualTemplate(caller,"length",assignType,""));
         }
         else {
-            Boolean assing=false;
+            Boolean needsType=false;
             Type returnType=assignType;
             if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
-                assing=true;
+                needsType=true;
                 if(parent.getKind().equals("CallMethod"))
                     returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
             }
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
-                if (assing){
+                if (needsType){
                     tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokestaticTemplate(caller,"length",returnType,"")));
                     return tempName+OllirTemplates.typeTemplate(returnType);
                 }
@@ -524,7 +562,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 }
             }
 
-            if(assing){
+            if(needsType){
                 ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",returnType,""));
             }
             else{
@@ -548,5 +586,64 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         return  true;
     }
 
+    private Boolean isClassVariable(String caller){
+        // Need to check right away because this doesn´t have a type
+        if(caller=="this")
+            return true;
+
+        // Caller can be like a.i32 or a.ClassName
+        String[] splitCaller=caller.split("\\.");
+
+        String type="";
+        // If its a method paramether they are like $1.a.int
+        if(splitCaller.length>2)
+            type=splitCaller[2];
+        else
+            type=splitCaller[1];
+
+        // Its a varible form
+        if(this.table.getImports().contains(type))
+            return false;
+
+        if(this.table.getSuper()!=null)
+            if(this.table.getSuper().equals(caller))
+                return false;
+
+        return true;
+    }
+
+    private String removeRepeated(StringBuilder ollir){
+
+        String originalString = ollir.toString();
+        String[] stringArray = originalString.split(";"); // split by whitespace
+
+        Set<String> setWithoutDuplicates = new HashSet<String>(Arrays.asList(stringArray));
+
+        ollir.setLength(0); // clear StringBuilder
+
+        for (String str : setWithoutDuplicates) {
+            ollir.append(str).append(" ");
+        }
+        return ollir.toString();
+    }
+
+    private boolean tempNotContained(String code) {
+        System.out.println("TEMP:"+code);
+        String[] instructions=code.split(";");
+        System.out.println("BEFORE FOR");
+        for (int i = 0; i < instructions.length; i++) {
+            instructions[i] += ";";
+            System.out.printf("I["+i+"]="+instructions[i]);
+        }
+
+        System.out.println("TEMP LIST:"+tempList);
+        for(var inst: instructions){
+            for(var temp: tempList){
+                if(inst.equals(temp))
+                    return false;
+            }
+        }
+        return true;
+    }
 
 }
