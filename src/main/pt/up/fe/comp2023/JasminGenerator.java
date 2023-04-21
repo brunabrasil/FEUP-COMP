@@ -40,7 +40,7 @@ public class JasminGenerator {
             stringBuilder.append(this.dealWithMethodHeader(method));
             String instructions = this.dealtWithMethodInstructions(method);
             if (!method.isConstructMethod()) {
-                stringBuilder.append(this.dealWithMethodLimits(method));
+                // stringBuilder.append(this.dealWithMethodLimits(method));
                 stringBuilder.append(instructions);
             }
         }
@@ -183,79 +183,6 @@ public class JasminGenerator {
 
         this.decrementStackCounter(1);
         return leftOperand + rightOperand + operation;
-    }
-
-    private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        OperationType ot = instruction.getOperation().getOpType();
-        StringBuilder stringBuilder = new StringBuilder();
-
-        switch (instruction.getOperation().getOpType()) {
-            case LTH, GTE -> {
-
-                String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
-                String rightOperand = loadElement(instruction.getRightOperand(), varTable);
-
-                stringBuilder.append(leftOperand)
-                        .append(rightOperand)
-                        .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
-                        .append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
-
-                // if_icmp decrements 2, iconst increments 1
-                this.decrementStackCounter(1);
-            }
-            case ANDB -> {
-
-                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
-
-                // Compare left operand
-                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
-                this.decrementStackCounter(1);
-
-                // Compare right operand
-                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
-                this.decrementStackCounter(1);
-
-                stringBuilder.append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
-
-                // iconst
-                this.incrementStackCounter(1);
-            }
-            case NOTB -> {
-                String operand = loadElement(instruction.getLeftOperand(), varTable);
-
-                stringBuilder.append(operand)
-                        .append("ifne ").append(this.getTrueLabel()).append("\n")
-                        .append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
-
-                // No need to change stack, load increments 1, ifne would dec.1 and iconst would inc.1
-            }
-            default -> {
-                return "Error in BooleansOperations\n";
-            }
-        }
-
-        this.conditional++;
-        return stringBuilder.toString();
-    }
-
-    private String dealWithRelationalOperation(OperationType ot, String trueLabel) {
-        return switch (ot) {
-            case LTH -> String.format("if_icmpge %s\n", trueLabel);
-            case GTE -> String.format("if_icmplt %s\n", trueLabel);
-            default -> "Error in RelationalOperations\n";
-        };
     }
 
     private String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
