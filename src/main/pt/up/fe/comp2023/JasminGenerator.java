@@ -260,7 +260,6 @@ public class JasminGenerator {
     private String dealWithBINARYOPER(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         return switch (instruction.getOperation().getOpType()) {
             case ADD, SUB, MUL, DIV -> this.dealWithIntOperation(instruction, varTable);
-            case LTH, GTE, ANDB, NOTB -> this.dealWithBooleanOperation(instruction, varTable);
             default -> "Error in BinaryOpInstruction";
         };
     }
