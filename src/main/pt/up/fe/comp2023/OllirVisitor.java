@@ -16,6 +16,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String currentMethodName;
     private Integer tempcount=0;
     private String currentAssignmentType;
+    private String currentCallMethodName;
     private Type assignType;
     private List<String> tempList= new ArrayList<>();
     private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","ArrayAssignment");
@@ -59,6 +60,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String ret="";
         for(JmmNode child : jmmNode.getChildren()){
             ret += visit(child,"");
+            System.out.println(visit(child,""));
             //ret +="\n";
         }
         return ret;
@@ -335,14 +337,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         String left=visit(jmmNode.getJmmChild(0));
         String right= visit(jmmNode.getJmmChild(1));
-   /*
-        for(int i=0; i<jmmNode.getChildren().size();i++){
-            if(i==0)
-                left=visit(jmmNode.getJmmChild(0));
-            else
-                right= visit(jmmNode.getJmmChild(1));
-        }
-*/
+
         StringBuilder ollir=new StringBuilder();
         if(needsTemp){
             String tempName="temp_"+tempcount;
@@ -378,8 +373,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         StringBuilder ollir = new StringBuilder();
 
         var parent=jmmNode.getJmmParent();
-        Boolean needsTemp=false;
-
+        Boolean needsTemp=false;;
         if(!parent.getKind().equals("Expr"))
             needsTemp=true;
 
@@ -391,7 +385,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         var children=jmmNode.getChildren();
 
-        String parameters=getParametersList(children);
+        String parameters=getParametersList(children,functionName);
         if(tempList.size()>0){
             ollir.append(String.join("\n", tempList));
         }
@@ -409,15 +403,18 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         else {
             Boolean assing=false;
-            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp")){
+            Type returnType=assignType;
+            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
                 assing=true;
+                if(parent.getKind().equals("CallMethod"))
+                    returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
             }
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
                 if (assing){
-                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(assignType),OllirTemplates.typeTemplate(assignType),OllirTemplates.invokestaticTemplate(caller,functionName,assignType,parameters)));
-                    return tempName+OllirTemplates.typeTemplate(assignType);
+                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokestaticTemplate(caller,functionName,returnType,parameters)));
+                    return tempName+OllirTemplates.typeTemplate(returnType);
                 }
                 else{
                     tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters)));
@@ -426,7 +423,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             }
 
             if(assing){
-                ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,assignType,parameters));
+                ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,returnType,parameters));
             }
             else{
                 ollir.append(OllirTemplates.invokestaticTemplate(caller,functionName,new Type("void",false),parameters));
@@ -444,7 +441,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     }
 
 
-    private String getParametersList(List<JmmNode> children){
+    private String getParametersList(List<JmmNode> children,String functionName){
 
         List<String> params=new ArrayList<>();
         List<String> paramsOllir = new ArrayList<>();
@@ -470,6 +467,14 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     paramsOllir.add("this");
                     break;
                 case "BinaryOp":
+                    paramsOllir.add(visit(child,""));
+                    break;
+                case "CallMethod":
+                    currentCallMethodName=functionName;
+                    paramsOllir.add(visit(child,""));
+                    break;
+                case "Length":
+                    currentCallMethodName=functionName;
                     paramsOllir.add(visit(child,""));
                     break;
             }
@@ -500,15 +505,18 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         else {
             Boolean assing=false;
-            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp")){
+            Type returnType=assignType;
+            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
                 assing=true;
+                if(parent.getKind().equals("CallMethod"))
+                    returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
             }
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
                 if (assing){
-                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(assignType),OllirTemplates.typeTemplate(assignType),OllirTemplates.invokestaticTemplate(caller,"length",assignType,"")));
-                    return tempName+OllirTemplates.typeTemplate(assignType);
+                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokestaticTemplate(caller,"length",returnType,"")));
+                    return tempName+OllirTemplates.typeTemplate(returnType);
                 }
                 else{
                     tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.invokestaticTemplate(caller,"length",new Type("void",false),"")));
@@ -517,7 +525,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             }
 
             if(assing){
-                ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",assignType,""));
+                ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",returnType,""));
             }
             else{
                 ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",new Type("void",false),""));

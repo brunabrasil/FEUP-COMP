@@ -1,52 +1,22 @@
 import io;
 class Simple {
-    int d;
-    public int add(int a, int b, Simple j,int h){
-        int c;
-        io t;
-        t=new io();
-        a=io.add();
-        a=io.teste();
-        a=io.teste(3+5);
-        d=4*5+6;
-        h=this.constInstr();
-        h=io.teste();
-        c=h.add(a,b);
-        a=d;
-        a=c+io.add();
-        c.length;
-        c=a.length;
-        c = a + this.constInstr();
-        this.constInstr();
-        return c;
+    public int getValue(bool u){
+        return 0;
     }
+    public int foo(){
+        int a;
+        bool b;
+
+        a = 1 * a.getValue(a.getValue(io.teste()));
+        //a = 1 + i.genInt();
+        b = io.genBool();
+
+        return 0;
+    }
+
+
 
     public static void main(String[] args){
-        int a;
-        int b;
-        int c;
-        Simple s;
-        a = this.constInstr();
-        a = 20;
-        b = 10;
-        s = new Simple();
-        c = s.add(a,b);
-        io.println(c);
+
     }
-
-    public int constInstr(){
-        int c;
-        c = 0;
-        c = 4;
-        c = 8;
-        c = 14;
-        c = 250;
-        c = 400;
-        c = 1000;
-        c = 100474650;
-		c = 10;
-        return c;
-    }
-
-
 }
