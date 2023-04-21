@@ -136,6 +136,7 @@ public class JasminGenerator {
             strBuilder.append(dealWithInstruction(i, method.getVarTable(), method.getLabels()));
             if (i instanceof CallInstruction && ((CallInstruction) i).getReturnType().getTypeOfElement() != ElementType.VOID) {
                 strBuilder.append("pop\n");
+                this.decrementStackCounter(1);
             }
         }
 
@@ -209,10 +210,14 @@ public class JasminGenerator {
             case VOID -> returnString = "return";
             case INT32, BOOLEAN -> {
                 returnString = loadElement(instruction.getOperand(), varTable);
+
+                this.decrementStackCounter(1);
                 returnString += "ireturn";
             }
             case OBJECTREF -> {
                 returnString = loadElement(instruction.getOperand(), varTable);
+
+                this.decrementStackCounter(1);
                 returnString += "areturn";
             }
             default -> {
@@ -232,6 +237,7 @@ public class JasminGenerator {
 
         stringBuilder += this.loadElement(value, varTable); //store const element on stack
 
+        this.decrementStackCounter(2);
         return stringBuilder + "putfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertType(var.getType()) + "\n";
     }
 
@@ -257,6 +263,7 @@ public class JasminGenerator {
         String stringBuilder = "";
 
         if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
+            this.incrementStackCounter(2);
 
             stringBuilder += "new " + this.getOjectClassName(((Operand)e).getName()) + "\ndup\n";
         }
@@ -278,6 +285,8 @@ public class JasminGenerator {
                 return "Error in IntOperation\n";
             }
         }
+
+        this.decrementStackCounter(1);
         return leftOperand + rightOperand + operation;
     }
 
@@ -364,9 +373,19 @@ public class JasminGenerator {
             stringBuilder.append(this.loadElement(instruction.getFirstArg(), varTable));
         }
 
+        int numParams = 0;
         for (Element element : instruction.getListOfOperands()) {
             stringBuilder.append(this.loadElement(element, varTable));
             parameters.append(this.convertType(element.getType()));
+            numParams++;
+        }
+
+        if (!instruction.getInvocationType().equals(CallType.invokestatic)) {
+            numParams += 1;
+        }
+        this.decrementStackCounter(numParams);
+        if (instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
+            this.incrementStackCounter(1);
         }
 
         stringBuilder.append(callType.name()).append(" ").append(this.getOjectClassName(className)).append(".").append(functionLiteral.replace("\"", "")).append("(").append(parameters).append(")").append(this.convertType(instruction.getReturnType())).append("\n");
@@ -381,6 +400,7 @@ public class JasminGenerator {
     private String loadElement(Element element, HashMap<String, Descriptor> varTable) {
         if (element instanceof LiteralElement) {
             String num = ((LiteralElement) element).getLiteral();
+            this.incrementStackCounter(1);
 
             return (Integer.parseInt(num) < -1 || Integer.parseInt(num) > 5 ?
                     Integer.parseInt(num) < -128 || Integer.parseInt(num) > 127 ?
@@ -393,12 +413,15 @@ public class JasminGenerator {
         else if (element instanceof Operand operand) {
             switch (operand.getType().getTypeOfElement()) {
                 case THIS -> {
+                    this.incrementStackCounter(1);
                     return "aload_0\n";
                 }
                 case INT32, BOOLEAN -> {
+                    this.incrementStackCounter(1);
                     return String.format("iload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
                 case OBJECTREF -> {
+                    this.incrementStackCounter(1);
                     return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
                 case CLASS -> { //TODO deal with class
@@ -417,9 +440,11 @@ public class JasminGenerator {
 
         switch (operand.getType().getTypeOfElement()) {
             case INT32, BOOLEAN -> {
+                this.decrementStackCounter(1);
                 return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             case OBJECTREF -> {
+                this.decrementStackCounter(1);
                 return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
             default -> {
@@ -435,6 +460,15 @@ public class JasminGenerator {
         } else {
             return " " + virtualReg;
         }
+    }
+
+    private void incrementStackCounter(int add) {
+        this.stackCounter += add;
+        if (this.stackCounter > this.maxCounter) this.maxCounter = stackCounter;
+    }
+
+    private void decrementStackCounter(int sub) {
+        this.stackCounter -= sub;
     }
 
     private String dealWithMethodLimits(Method method) {
