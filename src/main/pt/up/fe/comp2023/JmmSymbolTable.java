@@ -156,5 +156,14 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
 
+    public Type getParamFromNumber(String methodName, Integer paramNumber) {
 
+        for(var i=0;i<methodParameters.get(methodName).size();i++){
+            System.out.println("method:"+i+":"+ methodParameters.get(methodName).get(i).getType());
+            if(i==(paramNumber-1)){
+                return methodParameters.get(methodName).get(i).getType();
+            }
+        }
+        return null;
+    }
 }
