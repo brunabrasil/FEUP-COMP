@@ -133,7 +133,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String dealWithMainMethodDeclaration(JmmNode jmmNode, String s) {
         scope="METHOD";
         currentMethodName="main";
-
+        tempList.clear();
         StringBuilder ollir = new StringBuilder();
         // Appending the Main Method Template to the final string
         ollir.append(OllirTemplates.methodTemplate("main",
@@ -164,7 +164,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         scope="METHOD";
         String methodName = jmmNode.get("methodName");
         currentMethodName=methodName;
-
+        tempList.clear();
 
         StringBuilder ollir = new StringBuilder();
         // Appending the Normal Method Template to the final string
