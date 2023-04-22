@@ -324,7 +324,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         // It's a field
         else if((variable=this.table.getFieldByName(val))!=null){
-            if(s=="parameter" || s=="return"){
+            if(s=="parameter" || s=="return" || jmmNode.getJmmParent().getKind().equals("BinaryOp")){
                 String tempName="temp_"+tempcount;
                 tempcount++;
                 StringBuilder ollir=new StringBuilder();
