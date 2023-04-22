@@ -4,10 +4,8 @@ class A {
     int a;
 
     public int x(){
-        int b;
         a = 10;
         io.print(a);
-        b=a;
         return a;
     }
 
