@@ -559,6 +559,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         var parent=jmmNode.getJmmParent();
         Boolean needsTemp=false;
 
+        Type returnType=new Type("int",false);
         if(!parent.getKind().equals("Expr"))
             needsTemp=true;
 
@@ -566,14 +567,14 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             if(needsTemp){
                 String tempName="temp_"+tempcount;
                 tempcount++;
-                tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(assignType),OllirTemplates.typeTemplate(assignType),OllirTemplates.invokevirtualTemplate(caller,"length",assignType,"")));
-                return tempName+OllirTemplates.typeTemplate(assignType);
+                tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokevirtualTemplate(caller,"length",returnType,"")));
+                return tempName+OllirTemplates.typeTemplate(returnType);
             }
-            ollir.append(OllirTemplates.invokevirtualTemplate(caller,"length",assignType,""));
+            ollir.append(OllirTemplates.invokevirtualTemplate(caller,"length",returnType,""));
         }
         else {
             Boolean needsType=false;
-            Type returnType=assignType;
+            returnType=assignType;
             if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
                 needsType=true;
                 if(parent.getKind().equals("CallMethod"))
