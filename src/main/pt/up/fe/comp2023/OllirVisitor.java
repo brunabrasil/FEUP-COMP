@@ -6,6 +6,8 @@ import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
@@ -60,9 +62,10 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String ret="";
         for(JmmNode child : jmmNode.getChildren()){
             ret += visit(child,"");
-            System.out.println(visit(child,""));
             //ret +="\n";
         }
+        System.out.println(ret);
+
         return ret;
     }
 
@@ -96,7 +99,6 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             else {
                 classBody.add(visit(child,""));
             }
-            //System.out.println(child.getKind());
         }
 
         // Fields
@@ -144,7 +146,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         this.scope="METHOD";
         for (JmmNode child : jmmNode.getChildren()) {
             String ollirChild = visit(child, "");
-            body.add(ollirChild);
+            if(ollirChild!="")
+                body.add(ollirChild);
         }
         //Separates everything in the body with an \n
         ollir.append(String.join("\n", body));
@@ -319,12 +322,12 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         return OllirTemplates.variableTemplate(bool);
     }
     private String dealWithBinaryOp(JmmNode jmmNode, String s) {
-
         String op=jmmNode.get("op");
+        Type returnType=new Type("int",false);
         if(op=="<" || op=="&&"){
-            // TODO: In the future i think
-            return  null;
+            returnType=new Type("boolean",false);
         }
+        String ollirType=OllirTemplates.typeTemplate(returnType);
 
         boolean needsTemp=false;
         var parent=jmmNode.getJmmParent();
@@ -342,7 +345,6 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
 
 
-
         String left=visit(jmmNode.getJmmChild(0));
         String right= visit(jmmNode.getJmmChild(1));
 
@@ -350,13 +352,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         if(needsTemp){
             String tempName="temp_"+tempcount;
             tempcount++;
-            ollir.append(String.format("%s%s :=%s %s %s%s %s;",tempName,currentAssignmentType,currentAssignmentType,left,op,currentAssignmentType,right));
+            ollir.append(String.format("%s%s :=%s %s %s%s %s;\n",tempName,ollirType,ollirType,left,op,ollirType,right));
             tempList.add(ollir.toString());
-            return tempName+currentAssignmentType;
+            return tempName+ollirType;
         }
 
 
-        ollir.append(String.format("%s %s%s %s",left,op,currentAssignmentType,right));
+        ollir.append(String.format("%s %s%s %s",left,op,ollirType,right));
         return ollir.toString();
     }
 
@@ -367,12 +369,9 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String temp=visit(jmmNode.getJmmChild(0));
 
         if(tempList.size()>0){
-            //if(tempNotContained(temp)){
-                ollir.append("HELLLO\n");
+            if(tempNotContained(temp)){
                 ollir.append(String.join("\n", tempList));
-                ollir.append("\n");
-
-            //}
+            }
         }
         tempList.clear();
         ollir.append(temp);
@@ -383,13 +382,10 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String dealWithCallMethod(JmmNode jmmNode, String s) {
 
         StringBuilder ollir = new StringBuilder();
-        System.out.printf("TEMPNUMBER:"+tempcount);
         var parent=jmmNode.getJmmParent();
         Boolean needsTemp=false;;
-        System.out.println("Parent kind:"+parent.getKind());
         if(!parent.getKind().equals("Expr"))
             needsTemp=true;
-        System.out.println("NEEDSTEMP:"+needsTemp+" NODE KIND:"+jmmNode.getKind());
         String caller= visit(jmmNode.getJmmChild(0));
         Boolean isIntance=checkInstance(caller);
         String functionName=jmmNode.get("name");
@@ -399,13 +395,9 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         var children=jmmNode.getChildren();
 
         String parameters=getParametersList(children,functionName);
-
         if(tempList.size()>0){
-            ollir.append(String.join("\n", tempList));
+            ollir.append(String.join("", tempList));
         }
-
-
-        //ollir=removeRepeated(ollir);
 
         if(isIntance){
             // Its either a normal type like int or the own class type
@@ -612,31 +604,14 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         return true;
     }
 
-    private String removeRepeated(StringBuilder ollir){
 
-        String originalString = ollir.toString();
-        String[] stringArray = originalString.split(";"); // split by whitespace
-
-        Set<String> setWithoutDuplicates = new HashSet<String>(Arrays.asList(stringArray));
-
-        ollir.setLength(0); // clear StringBuilder
-
-        for (String str : setWithoutDuplicates) {
-            ollir.append(str).append(" ");
-        }
-        return ollir.toString();
-    }
-
+    // Checks if the code needed to generate a temp_X variable is already included
     private boolean tempNotContained(String code) {
-        System.out.println("TEMP:"+code);
-        String[] instructions=code.split(";");
-        System.out.println("BEFORE FOR");
+        String[] instructions=code.split("\n");
         for (int i = 0; i < instructions.length; i++) {
-            instructions[i] += ";";
-            System.out.printf("I["+i+"]="+instructions[i]);
+            instructions[i] += "\n";
         }
 
-        System.out.println("TEMP LIST:"+tempList);
         for(var inst: instructions){
             for(var temp: tempList){
                 if(inst.equals(temp))
