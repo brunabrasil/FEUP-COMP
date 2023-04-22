@@ -45,10 +45,11 @@ public class Launcher {
         JmmAnalyser analyser= new JmmAnalyser();
         //System.out.println(parserResult.getRootNode().toTree());
         var result=analyser.semanticAnalysis(parserResult);
-        if(result.getReports().size()!=0)
-            return;
+        if(result.getReports().size()!=0){
+            throw new RuntimeException("Semantic Error detected");
+        }
         OllirOptimization ollir=new OllirOptimization();
-        ollir.toOllir(analyser.semanticAnalysis(parserResult));
+        ollir.toOllir(result);
 
 
     }
