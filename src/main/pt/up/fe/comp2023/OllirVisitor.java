@@ -216,6 +216,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         scope="ASSIGNMENT";
         String varName=jmmNode.get("var");
         boolean classField=false;
+        boolean isMethodParameter=false;
         Symbol variable;
 
         /*
@@ -228,8 +229,11 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }*/
         variable=this.table.getVariableInMethod(currentMethodName,varName);
         if(variable==null){
-            if((variable=this.table.getParameterInMethod(currentMethodName,varName))==null){
+            variable=this.table.getParameterInMethod(currentMethodName,varName);
+            isMethodParameter=true;
+            if(variable==null){
                 variable=this.table.getFieldByName(varName);
+                isMethodParameter=false;
                 classField=true;
             };
         }
@@ -246,7 +250,14 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
 */
         // Storing the ollir variable and type template into variables
-        String ollirVariable=OllirTemplates.variableTemplate(variable);
+        String ollirVariable;
+        if(isMethodParameter){
+            ollirVariable=this.table.parameterNumber(currentMethodName,varName)+"."+OllirTemplates.variableTemplate(variable);
+        }
+        else{
+            ollirVariable=OllirTemplates.variableTemplate(variable);
+        }
+
         String ollirType=OllirTemplates.typeTemplate(variable.getType());
 
         StringBuilder ollir = new StringBuilder();
