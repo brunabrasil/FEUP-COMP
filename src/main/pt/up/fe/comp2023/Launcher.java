@@ -46,7 +46,7 @@ public class Launcher {
         //System.out.println(parserResult.getRootNode().toTree());
         var result=analyser.semanticAnalysis(parserResult);
         if(result.getReports().size()!=0){
-            return;
+            throw new RuntimeException("There is/are "+result.getReports().size()+" semantic errors");
         }
         OllirOptimization ollir=new OllirOptimization();
         ollir.toOllir(result);

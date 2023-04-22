@@ -1,7 +1,17 @@
+import io;
+
 class A {
     int a;
 
-    public static void main(String[] args){
+    public int x(int a){
         a = 10;
+        io.print(a);
+        return a;
+    }
+
+    public static void main(String[] args){
+        A a;
+        a = new A();
+
     }
 }
