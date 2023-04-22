@@ -13,7 +13,8 @@ public class OllirOptimization implements JmmOptimization {
     @Override
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
         JmmNode node= jmmSemanticsResult.getRootNode();
-
+        if(jmmSemanticsResult.getReports().size()!=0)
+            System.out.println(jmmSemanticsResult.getReports().toString());
         OllirVisitor visitor=new OllirVisitor((JmmSymbolTable) jmmSemanticsResult.getSymbolTable(),jmmSemanticsResult.getReports());
         String ollircode= visitor.visit(node,"");
 

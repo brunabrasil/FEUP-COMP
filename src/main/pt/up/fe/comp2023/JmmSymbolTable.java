@@ -65,11 +65,11 @@ public class JmmSymbolTable implements SymbolTable {
     }
 
     public Symbol getVariableInMethod(String methodName,String varName){
-
         for(var variable : this.localVariables.get(methodName)){
-            //System.out.println(variable);
-            if(variable.getName().equals(varName))
+            if(variable.getName().equals(varName)){
                 return variable;
+            }
+
         }
         return null;
     }

@@ -183,7 +183,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             else if(statements.contains(child.getKind()))
                 body.add( visit(child,""));
             else{
-                String temp=visit(child,"");
+                String temp=visit(child,"return");
                 if(temp=="this"){
                     returnString+=temp+OllirTemplates.typeTemplate(this.table.getReturnType(methodName));
                 }
@@ -217,6 +217,24 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String varName=jmmNode.get("var");
         boolean classField=false;
         Symbol variable;
+
+        /*
+        if((variable=this.table.getVariableInMethod(currentMethodName,varName))==null){
+            System.out.println("NOT A VAR");
+            if((variable=this.table.getParameterInMethod(currentMethodName,varName))==null){
+                variable=this.table.getFieldByName(varName);
+                classField=true;
+            }
+        }*/
+        variable=this.table.getVariableInMethod(currentMethodName,varName);
+        if(variable==null){
+            if((variable=this.table.getParameterInMethod(currentMethodName,varName))==null){
+                variable=this.table.getFieldByName(varName);
+                classField=true;
+            };
+        }
+
+/*
         // See if it's a field of the class
         if((variable=this.table.getFieldByName(varName))!=null){
             classField=true;
@@ -226,7 +244,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             // If it's not a parameter then its a LocalVariable
             variable=this.table.getVariableInMethod(currentMethodName,varName);
         }
-
+*/
         // Storing the ollir variable and type template into variables
         String ollirVariable=OllirTemplates.variableTemplate(variable);
         String ollirType=OllirTemplates.typeTemplate(variable.getType());
@@ -295,17 +313,26 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
 
         Symbol variable;
-        // It's a class field
-        if((variable=this.table.getFieldByName(val))!=null){
-            return OllirTemplates.getfieldTemplate(variable);
+        // It's a method local variable
+        variable=this.table.getVariableInMethod(currentMethodName,val);
+        if(variable!=null){
+            return OllirTemplates.variableTemplate(variable);
         }
         // It's a method parameter
         else if((variable=this.table.getParameterInMethod(currentMethodName,val))!=null){
             return this.table.parameterNumber(currentMethodName,val)+"."+OllirTemplates.variableTemplate(variable);
         }
-        // It's a method local variable
-        else if((variable=this.table.getVariableInMethod(currentMethodName,val))!=null){
-            return OllirTemplates.variableTemplate(variable);
+        // It's a field
+        else if((variable=this.table.getFieldByName(val))!=null){
+            if(s=="parameter" || s=="return"){
+                String tempName="temp_"+tempcount;
+                tempcount++;
+                StringBuilder ollir=new StringBuilder();
+                ollir.append(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(variable.getType()),OllirTemplates.typeTemplate(variable.getType()),OllirTemplates.getfieldTemplate(variable)));
+                tempList.add(ollir.toString());
+                return tempName+OllirTemplates.typeTemplate(variable.getType());
+            }
+            return OllirTemplates.getfieldTemplate(variable);
         }
 
         // It's a method caller, Ex:for "io.println(a)" its "io"
@@ -491,7 +518,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     paramsOllir.add(String.format("%s%s",child.get("value"),OllirTemplates.typeTemplate(type)));
                     break;
                 case "Identifier":
-                    paramsOllir.add(visit(child,""));
+                    paramsOllir.add(visit(child,"parameter"));
                     break;
                 case "This":
                     paramsOllir.add("this");
