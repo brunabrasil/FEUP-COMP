@@ -4,7 +4,9 @@ class A {
     int a;
 
     public int x(int a){
-        a = 10;
+        int b;
+        int[] c;
+        c.length;
         io.print(a);
         return a;
     }
