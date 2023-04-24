@@ -25,7 +25,7 @@ public class OllirTemplates {
     }
 
     public static String fieldTemplate(Symbol variable) {
-        return String.format(".field private %s;\n", variableTemplate(variable));
+        return String.format(".field public %s;\n", variableTemplate(variable));
     }
 
 
