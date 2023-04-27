@@ -153,7 +153,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         ollir.append(String.join("\n", body));
 
         // The return is always void
-        //ollir.append("\nret.V;");
+        ollir.append("\nret.V;");
         ollir.append(OllirTemplates.closeBrackets());
         s+=ollir.toString();
         return s;
