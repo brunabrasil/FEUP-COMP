@@ -49,7 +49,7 @@ public class Launcher {
             System.out.println(result.getReports());
             return;
         }
-        OllirOptimization ollir=new OllirOptimization();
+        OllirOptimization ollir = new OllirOptimization();
         ollir.toOllir(result);
 
 
