@@ -1,23 +1,20 @@
+import ioPlus;
+class ArrayAccess {
 
-import GetterAndSetter;
-import io;
-class PrintOtherClassFromParam {
-	public int print(GetterAndSetter b){
-		GetterAndSetter myGetter;
-		int content;
-		myGetter = b;
-		content = myGetter.getA();
-		io.print(content);
-		return 1;
+	public int foo(int[] a) {
+		int result;
+
+
+
+	    a[0] = 1;
+		a[1] = 2;
+		a[2] = 3;
+		a[3] = 4;
+		a[4] = 5;
+
+
+		return result;
 	}
 
-	public static void main(String[] args){
-		GetterAndSetter b;
-		PrintOtherClassFromParam c;
-		int dummy;
-		b = new GetterAndSetter();
-		dummy = b.setA(10);
-		c = new PrintOtherClassFromParam();
-		c.print(b);
-	}
+
 }
