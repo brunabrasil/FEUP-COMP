@@ -28,6 +28,29 @@ public class OllirTemplates {
         return String.format(".field private %s;\n", variableTemplate(variable));
     }
 
+    public static String variableTemplate2(Symbol variable){
+        StringBuilder var = new StringBuilder(variable.getName());
+
+        var.append(typeTemplate(variable.getType()));
+
+        return var.toString();
+    }
+
+    public static String typeTemplateWithoutArray(Type type){
+        StringBuilder ollir = new StringBuilder();
+
+        if (type.getName().equals("int")) {
+            ollir.append(".i32");
+        } else if (type.getName().equals("void")) {
+            ollir.append(".V");
+        } else if (type.getName().equals("boolean")) {
+            ollir.append(".bool");
+        } else {
+            ollir.append(".").append(type.getName());
+        }
+
+        return ollir.toString();
+    }
 
     public static String variableTemplate(Symbol variable) {
         StringBuilder var = new StringBuilder(variable.getName());
@@ -36,7 +59,6 @@ public class OllirTemplates {
 
         return var.toString();
     }
-
 
     public static String typeTemplate(Type type) {
         StringBuilder ollir = new StringBuilder();
@@ -122,4 +144,9 @@ public class OllirTemplates {
     public static String objectInstanceTemplate(String name,String type) {
         return String.format("invokespecial(%s%s,\"<init>\").V;",name,type);
     }
+
+    public static String arrayLengthTemplate(String name){
+        return String.format("arraylength(%s).i32",name);
+    }
+
 }
