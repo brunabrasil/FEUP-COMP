@@ -34,7 +34,7 @@ public class JasminGenerator {
         // Declaration of the fields
         for (Field fi: classUnit.getFields()) {
             strBuilder.append(".field ");
-            strBuilder.append(fi.getFieldName()).append("' ");
+            strBuilder.append(fi.getFieldName()).append(" ");
             strBuilder.append(this.convertType(fi.getFieldType())).append("\n");
         }
 
