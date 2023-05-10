@@ -76,8 +76,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
 
     private Type dealWithIdentifier(JmmNode jmmNode, String s) {
         String val = jmmNode.get("value");
-        int line = Integer.valueOf(jmmNode.get("lineStart"));
-        int col = Integer.valueOf(jmmNode.get("colStart"));
+        int line = Integer.parseInt(jmmNode.get("lineStart"));
+        int col = Integer.parseInt(jmmNode.get("colStart"));
         JmmNode parent = jmmNode.getJmmParent();
 
         while(!parent.getKind().equals("NormalMethod") && !parent.getKind().equals("MainMethod")) {
@@ -119,7 +119,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, Type> {
                 }
             }
         }
-
 
         if((table.getImports() == null || !table.getImports().contains(val))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Variable not declared"));

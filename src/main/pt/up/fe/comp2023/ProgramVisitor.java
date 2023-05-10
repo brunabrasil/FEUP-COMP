@@ -42,23 +42,23 @@ public class ProgramVisitor extends AJmmVisitor<String, Type> {
                     case "IfElseStmt":
                     case "WhileStmt":
                     case "Expr":
-                    case "Assignment":
                     case "AssignmentArray":
+                    case "Assignment":
                         StatementVisitor statementAnalyser = new StatementVisitor(table,reports);
                         type = statementAnalyser.visit(children.get(i), "");
                         break;
-                    case "Parenthesis":
                     case "Indexing":
+                    case "Parenthesis":
                     case "Length":
                     case "CallMethod":
                     case "UnaryOp":
                     case "BinaryOp":
                     case "NewIntArray":
                     case "NewObject":
+                    case "This":
                     case "Integer":
                     case "Boolean":
                     case "Identifier":
-                    case "This":
                         ExpressionVisitor expressionAnalyser = new ExpressionVisitor(table,reports);
                         type = expressionAnalyser.visit(children.get(i), "");
                         break;
