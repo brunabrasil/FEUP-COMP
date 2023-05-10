@@ -17,11 +17,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String scope;
     private String currentMethodName;
     private Integer tempcount=0;
+    private Integer ifcounter=0;
     private String currentAssignmentType;
     private String currentCallMethodName;
     private Type assignType;
     private List<String> tempList= new ArrayList<>();
-    private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","ArrayAssignment");
+    private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","AssignmentArray");
+    private final List<String> variableTypes=Arrays.asList("Integer","Boolean","Identifier");
     public OllirVisitor(JmmSymbolTable table, List<Report> reports){
         this.table=table;
         this.reports=reports;
@@ -36,9 +38,16 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         addVisit("MainMethod", this::dealWithMainMethodDeclaration);
 
         // Statements
+
+        addVisit("Stmt",this::dealWithStmt);
+        addVisit("IfElseStmt",this::dealWithIfElse);
+        addVisit("WhileStmt",this::dealWithWhile);
         addVisit("Assignment",this::dealWithAssignment);
         addVisit("Expr",this::dealWithExpr);
+        addVisit("AssignmentArray",this::dealWithAssignmentArray);
         // Expressions
+        addVisit("NewIntArray",this::dealWithNewIntArray);
+        addVisit("Indexing",this::dealWithIndexing);
         addVisit("CallMethod",this::dealWithCallMethod);
         addVisit("Length",this::dealWithLength);
         addVisit("BinaryOp",this::dealWithBinaryOp);
@@ -180,8 +189,9 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             // Types are skipped because they are parameters
             if(child.getKind().equals("Type"))
                 continue;
-            else if(statements.contains(child.getKind()))
+            else if(statements.contains(child.getKind())){
                 body.add( visit(child,""));
+            }
             else{
                 String temp=visit(child,"return");
                 if(temp=="this"){
@@ -352,17 +362,17 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     }
 
     private String dealWithBoolean(JmmNode jmmNode, String s) {
-        String boolvalue="1";
+        /*String boolvalue="1";
         if(jmmNode.get("value")=="false")
-            boolvalue="0";
-        Symbol bool=new Symbol(new Type("boolean",false),boolvalue);
+            boolvalue="0";*/
+        Symbol bool=new Symbol(new Type("boolean",false),jmmNode.get("value"));
 
         return OllirTemplates.variableTemplate(bool);
     }
     private String dealWithBinaryOp(JmmNode jmmNode, String s) {
         String op=jmmNode.get("op");
         Type returnType=new Type("int",false);
-        if(op=="<" || op=="&&"){
+        if(op.equals("<") || op.equals("&&")){
             returnType=new Type("boolean",false);
         }
         String ollirType=OllirTemplates.typeTemplate(returnType);
@@ -379,6 +389,10 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         else if(scope=="METHOD"){
             if(!parent.getKind().equals("NormalMethod"))
+                needsTemp=true;
+        }
+        else if(scope=="STATEMENT"){
+            if(!parent.getKind().equals("IfElseStmt") && !parent.getKind().equals("WhileStmt") )
                 needsTemp=true;
         }
 
@@ -545,6 +559,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     currentCallMethodName=functionName;
                     paramsOllir.add(visit(child,""));
                     break;
+                case "Indexing":
+                    String array=visit(child,"parameter");
+                    String arraytype=array.split("\\.")[array.split("\\.").length-1];
+                    String temp="temp_"+tempcount+"."+arraytype;
+                    tempList.add(String.format("%s :=.%s %s;\n",temp,arraytype,array));
+                    paramsOllir.add(temp);
+                    break;
             }
         }
 
@@ -563,45 +584,16 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         if(!parent.getKind().equals("Expr"))
             needsTemp=true;
 
-        if(checkInstance(caller)){
-            if(needsTemp){
-                String tempName="temp_"+tempcount;
-                tempcount++;
-                tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokevirtualTemplate(caller,"length",returnType,"")));
-                return tempName+OllirTemplates.typeTemplate(returnType);
-            }
-            ollir.append(OllirTemplates.invokevirtualTemplate(caller,"length",returnType,""));
+        String tempName="temp_"+tempcount;
+        tempcount++;
+        String finalstring=String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.arrayLengthTemplate(caller));
+        if(needsTemp){
+            tempList.add(finalstring);
+            return tempName+OllirTemplates.typeTemplate(returnType);
         }
-        else {
-            Boolean needsType=false;
-            returnType=assignType;
-            if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
-                needsType=true;
-                if(parent.getKind().equals("CallMethod"))
-                    returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
-            }
-            if(needsTemp){
-                String tempName="temp_"+tempcount;
-                tempcount++;
-                if (needsType){
-                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(returnType),OllirTemplates.typeTemplate(returnType),OllirTemplates.invokestaticTemplate(caller,"length",returnType,"")));
-                    return tempName+OllirTemplates.typeTemplate(returnType);
-                }
-                else{
-                    tempList.add(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.typeTemplate(new Type("void",false)),OllirTemplates.invokestaticTemplate(caller,"length",new Type("void",false),"")));
-                    return tempName+OllirTemplates.typeTemplate(new Type("void",false));
-                }
-            }
 
-            if(needsType){
-                ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",returnType,""));
-            }
-            else{
-                ollir.append(OllirTemplates.invokestaticTemplate(caller,"length",new Type("void",false),""));
-            }
 
-        }
-        ollir.append(";\n");
+        ollir.append(finalstring);
 
         return ollir.toString();
 
@@ -659,5 +651,171 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         return true;
     }
+
+
+    private String dealWithStmt(JmmNode jmmNode, String s) {
+        StringBuilder ollir= new StringBuilder();
+        List<String> body = new ArrayList<>();
+        for(var child : jmmNode.getChildren()){
+            body.add( visit(child,""));
+        }
+        ollir.append(String.join("\n", body));
+
+        return ollir.toString();
+    }
+
+    private String dealWithWhile(JmmNode jmmNode, String s) {
+        scope="STATEMENT";
+        StringBuilder ollir=new StringBuilder();
+
+
+        String ifexpression=visit(jmmNode.getJmmChild(0),"");
+        if(tempList.size()>0){
+            ollir.append(String.join("\n",tempList));
+        }
+        ollir.append("if(");
+        ollir.append(ifexpression);
+        ollir.append(") goto whilebody_"+ifcounter+";").append("\n");
+        ollir.append("goto endwhile_"+ifcounter+";").append("\n");
+        ollir.append("whilebody_"+ifcounter+":\n\t");
+
+        String whilestatement=visit(jmmNode.getJmmChild(1),"");
+        ollir.append(whilestatement);
+        ollir.append("endwhile_"+ifcounter+":\n");
+        return ollir.toString();
+    }
+
+
+    private String dealWithIfElse(JmmNode jmmNode, String s) {
+        scope="STATEMENT";
+        StringBuilder ollir=new StringBuilder();
+        String ifexpression=visit(jmmNode.getJmmChild(0),"");
+        if(tempList.size()>0){
+            ollir.append(String.join("\n",tempList));
+        }
+        ollir.append("if(");
+        ollir.append(ifexpression);
+        ollir.append(") goto ifbody_"+ifcounter+";").append("\n\t");
+
+        String elsestatement=visit(jmmNode.getJmmChild(2),"");
+        ollir.append(elsestatement);
+        ollir.append("goto endif_"+ifcounter+";").append("\n");
+        ollir.append("ifbody_"+ifcounter+":\n\t");
+        String ifstatement=visit(jmmNode.getJmmChild(1),"");
+        ollir.append(ifstatement);
+        ollir.append("endif_"+ifcounter+":\n");
+
+        ifcounter++;
+
+        return ollir.toString();
+    }
+
+
+
+    private String dealWithIndexing(JmmNode jmmNode, String s) {
+
+        StringBuilder ollir=new StringBuilder();
+
+        String callertemp=visit(jmmNode.getJmmChild(0));
+        var callerparts=callertemp.split("\\.");
+        System.out.println("CAllerTemp:"+callertemp);
+        System.out.println("CallerParts:"+Arrays.toString(callerparts));
+
+        boolean needsTemp=false;
+        String index=visit(jmmNode.getJmmChild(1));
+        String tempName="";
+        if(variableTypes.contains(jmmNode.getJmmChild(1).getKind())){
+
+            String type=index.split("\\.")[index.split("\\.").length-1];
+            tempName="temp_"+tempcount+"."+type;
+            tempcount++;
+            tempList.add(String.format("%s :=.%s %s;\n",tempName,type,index));
+            needsTemp=true;
+        }
+
+        String indexfinal=index;
+        if(needsTemp){
+            indexfinal=tempName;
+        }
+        String returnString="";
+        String returnType="";
+        if(callerparts.length==4){
+            returnType=callerparts[3];
+            returnString=String.format("%s.%s[%s].%s",callerparts[0],callerparts[1],indexfinal,returnType);
+        }else{
+            returnType=callerparts[2];
+            returnString=String.format("%s[%s].%s",callerparts[0],indexfinal,returnType);
+        }
+
+
+        if(jmmNode.getJmmParent().getKind().equals("Indexing")){
+            tempName="temp_"+tempcount+"."+returnType;
+            tempcount++;
+            tempList.add(String.format("%s :=.%s %s;\n",tempName,returnType,returnString));
+            return  tempName;
+        }
+        return  returnString;
+
+    }
+
+    private String dealWithAssignmentArray(JmmNode jmmNode, String s) {
+
+        StringBuilder ollir=new StringBuilder();
+        String varName=jmmNode.get("var");
+        boolean classField=false;
+        boolean isMethodParameter=false;
+
+        Symbol variable=this.table.getVariableInMethod(currentMethodName,varName);
+        if(variable==null){
+            variable=this.table.getParameterInMethod(currentMethodName,varName);
+            isMethodParameter=true;
+            if(variable==null){
+                variable=this.table.getFieldByName(varName);
+                isMethodParameter=false;
+                classField=true;
+            };
+        }
+
+        String ollirVariable="";
+        if(isMethodParameter){
+            ollirVariable=this.table.parameterNumber(currentMethodName,varName)+"."+varName;
+        }
+        else{
+            ollirVariable=varName;
+        }
+        String ollirType=OllirTemplates.typeTemplateWithoutArray(variable.getType());
+
+        String arrayIndex=visit(jmmNode.getJmmChild(0),"");
+        String secondExpression=visit(jmmNode.getJmmChild(1),"");
+        // In case its a binary operation
+        if(tempList.size()>0){
+            ollir.append(String.join("\n", tempList));
+        }
+        tempList.clear();
+
+        if(classField){
+            // TODO:
+            //HELP ME GOD
+        }
+        else{
+            String tempname="temp_"+tempcount;
+            tempcount++;
+            String tempvar=tempname+".i32 :=.i32 "+arrayIndex+";\n";
+            ollir.append(tempvar);
+            ollir.append(String.format("%s[%s.i32]%s :=%s %s;\n",ollirVariable,tempname,ollirType,ollirType,secondExpression));
+
+        }
+
+        return ollir.toString();
+    }
+
+
+    private String dealWithNewIntArray(JmmNode jmmNode, String s) {
+        StringBuilder ollir=new StringBuilder();
+        String expression=visit(jmmNode.getJmmChild(0),"");
+        ollir.append(String.format("new(array,%s)%s",expression,currentAssignmentType));
+        return ollir.toString();
+    }
+
 
 }
