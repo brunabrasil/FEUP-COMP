@@ -23,6 +23,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private Type assignType;
     private List<String> tempList= new ArrayList<>();
     private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","AssignmentArray");
+    private final List<String> variableTypes=Arrays.asList("Integer","Boolean","Identifier");
     public OllirVisitor(JmmSymbolTable table, List<Report> reports){
         this.table=table;
         this.reports=reports;
@@ -558,6 +559,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     currentCallMethodName=functionName;
                     paramsOllir.add(visit(child,""));
                     break;
+                case "Indexing":
+                    String array=visit(child,"parameter");
+                    String arraytype=array.split("\\.")[array.split("\\.").length-1];
+                    String temp="temp_"+tempcount+"."+arraytype;
+                    tempList.add(String.format("%s :=.%s %s;\n",temp,arraytype,array));
+                    paramsOllir.add(temp);
+                    break;
             }
         }
 
@@ -709,14 +717,45 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         StringBuilder ollir=new StringBuilder();
 
         String callertemp=visit(jmmNode.getJmmChild(0));
-        var callerparts=callertemp.split(".");
+        var callerparts=callertemp.split("\\.");
+        System.out.println("CAllerTemp:"+callertemp);
+        System.out.println("CallerParts:"+Arrays.toString(callerparts));
 
-        String caller=callerparts[0];
+        boolean needsTemp=false;
+        String index=visit(jmmNode.getJmmChild(1));
+        String tempName="";
+        if(variableTypes.contains(jmmNode.getJmmChild(1).getKind())){
+
+            String type=index.split("\\.")[index.split("\\.").length-1];
+            tempName="temp_"+tempcount+"."+type;
+            tempcount++;
+            tempList.add(String.format("%s :=.%s %s;\n",tempName,type,index));
+            needsTemp=true;
+        }
+
+        String indexfinal=index;
+        if(needsTemp){
+            indexfinal=tempName;
+        }
+        String returnString="";
+        String returnType="";
+        if(callerparts.length==4){
+            returnType=callerparts[3];
+            returnString=String.format("%s.%s[%s].%s",callerparts[0],callerparts[1],indexfinal,returnType);
+        }else{
+            returnType=callerparts[2];
+            returnString=String.format("%s[%s].%s",callerparts[0],indexfinal,returnType);
+        }
 
 
+        if(jmmNode.getJmmParent().getKind().equals("Indexing")){
+            tempName="temp_"+tempcount+"."+returnType;
+            tempcount++;
+            tempList.add(String.format("%s :=.%s %s;\n",tempName,returnType,returnString));
+            return  tempName;
+        }
+        return  returnString;
 
-
-        return null;
     }
 
     private String dealWithAssignmentArray(JmmNode jmmNode, String s) {
@@ -760,6 +799,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         }
         else{
             String tempname="temp_"+tempcount;
+            tempcount++;
             String tempvar=tempname+".i32 :=.i32 "+arrayIndex+";\n";
             ollir.append(tempvar);
             ollir.append(String.format("%s[%s.i32]%s :=%s %s;\n",ollirVariable,tempname,ollirType,ollirType,secondExpression));
