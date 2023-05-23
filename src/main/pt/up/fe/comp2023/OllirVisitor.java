@@ -825,11 +825,14 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
     private String dealWithUnaryOp(JmmNode jmmNode, String s) {
 
-        StringBuilder ollir = new StringBuilder("!.bool ");
-        String ollirChild = visit(jmmNode.getChildren().get(0),"");
 
-        ollir.append(ollirChild);
-        return ollir.toString();
+        String child = visit(jmmNode.getChildren().get(0),"");
+
+
+        var tempName="temp_"+tempcount+".bool";
+        tempcount++;
+        tempList.add(String.format("%s :=.bool !.bool %s;\n",tempName,child));
+        return  tempName;
     }
 
 
