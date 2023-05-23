@@ -46,6 +46,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         addVisit("Expr",this::dealWithExpr);
         addVisit("AssignmentArray",this::dealWithAssignmentArray);
         // Expressions
+        addVisit("UnaryOp",this::dealWithUnaryOp);
         addVisit("NewIntArray",this::dealWithNewIntArray);
         addVisit("Indexing",this::dealWithIndexing);
         addVisit("CallMethod",this::dealWithCallMethod);
@@ -453,8 +454,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         if(isIntance){
             // Its either a normal type like int or the own class type
-            if(isClassVariable(caller))
+            if(isClassVariable(caller)){
                 functionType=this.table.getMethodType(functionName);
+                // TODO: TEST THIS MORE
+                if(functionType==null)
+                    functionType=new Type(this.table.getClassName(),false);
+            }
+
             // Its a variable thats from an import or from the extended class
             else{
                 functionType=new Type("void",false);
@@ -814,6 +820,15 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         StringBuilder ollir=new StringBuilder();
         String expression=visit(jmmNode.getJmmChild(0),"");
         ollir.append(String.format("new(array,%s)%s",expression,currentAssignmentType));
+        return ollir.toString();
+    }
+
+    private String dealWithUnaryOp(JmmNode jmmNode, String s) {
+
+        StringBuilder ollir = new StringBuilder("!.bool ");
+        String ollirChild = visit(jmmNode.getChildren().get(0),"");
+
+        ollir.append(ollirChild);
         return ollir.toString();
     }
 
