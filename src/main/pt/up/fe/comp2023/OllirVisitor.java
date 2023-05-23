@@ -572,6 +572,10 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     tempList.add(String.format("%s :=.%s %s;\n",temp,arraytype,array));
                     paramsOllir.add(temp);
                     break;
+                case "UnaryOp":
+                    paramsOllir.add(visit(child,""));
+                    break;
+
             }
         }
 
