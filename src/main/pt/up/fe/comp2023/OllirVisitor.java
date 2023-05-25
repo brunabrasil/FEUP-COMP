@@ -587,9 +587,9 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     break;
                 case "NewIntArray":
                     String newarray=visit(child,"");
-                    String temp3="temp_"+tempcount+".i32";
+                    String temp3="temp_"+tempcount+".array.i32";
                     tempcount++;
-                    tempList.add(String.format("%s :=.i32 %s;\n",temp3,newarray));
+                    tempList.add(String.format("%s :=.array.i32 %s;\n",temp3,newarray));
                     paramsOllir.add(temp3);
                     break;
 
