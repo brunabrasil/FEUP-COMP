@@ -11,7 +11,11 @@ public class ConstantFolding extends AJmmVisitor<String, String> {
     protected void buildVisitor() {
         addVisit("BinaryOp", this::foldBinaryOp);
         addVisit("UnaryOp", this::foldUnaryOp);
+        setDefaultVisit(this::defaultVisit);
 
+    }
+    public void foldConstantIf(JmmNode expr, JmmNode jmmNode) {
+        replaceNode(jmmNode, expr);
     }
 
     public static void replaceNode (JmmNode nodeToReplace, JmmNode newNode) {
@@ -77,6 +81,13 @@ public class ConstantFolding extends AJmmVisitor<String, String> {
         }
         return "";
     }
+    private String defaultVisit(JmmNode jmmNode, String dummy) {
+        for(JmmNode child : jmmNode.getChildren()){
+            visit(child, dummy);
+        }
+        return "";
+    }
+
     public boolean hasChanged(){
         return hasChanged;
     }
