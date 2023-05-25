@@ -527,6 +527,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
     private String dealWithNewObject(JmmNode jmmNode, String s) {
         String objectName=jmmNode.get("name");
+        // TODO: ADD INVOKe SPECIAL
+        //tempList.add(String.format("%s",OllirTemplates.objectInitTemplate(objectName)))
         return OllirTemplates.objectInitTemplate(objectName);
     }
 
@@ -580,10 +582,11 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 case "NewObject":
                     String object=visit(child,"");
                     String objecttype=object.split("\\.")[object.split("\\.").length-1];
-                    String temp2="temp_"+tempcount+"."+objecttype;
+                    String temp2="temp_"+tempcount+".";
                     tempcount++;
-                    tempList.add(String.format("%s :=.%s %s;\n",temp2,objecttype,object));
-                    paramsOllir.add(temp2);
+                    tempList.add(String.format("%s%s :=.%s %s;\n",temp2,objecttype,objecttype,object));
+                    tempList.add(String.format("%s\n",OllirTemplates.objectInstanceTemplate(temp2,objecttype)));
+                    paramsOllir.add(temp2+objecttype);
                     break;
                 case "NewIntArray":
                     String newarray=visit(child,"");
