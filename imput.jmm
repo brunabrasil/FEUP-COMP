@@ -4,7 +4,7 @@ class ArrayAccessOnInt {
 
     }
 
-    public int teste(int[] a){
+    public int teste( ArrayAccessOnInt a){
   return 1;
 }
     public boolean foo() {
@@ -12,7 +12,7 @@ class ArrayAccessOnInt {
         int a;
         ArrayAccessOnInt b;
 
-       a=b.teste(new int[2+3]);
+       a=b.teste(new ArrayAccessOnInt());
 
         return c;
     }
