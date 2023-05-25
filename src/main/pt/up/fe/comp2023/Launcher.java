@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.jasmin.JasminBackend;
+import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.specs.util.SpecsIo;
@@ -50,8 +52,15 @@ public class Launcher {
             return;
         }
         OllirOptimization ollir = new OllirOptimization();
-        ollir.toOllir(result);
+        OllirResult ollirResult  = ollir.toOllir(result);
 
+        JasminBackend jasminBackend = new BackendStage();
+
+        JasminResult jasminResult = jasminBackend.toJasmin(ollirResult);
+
+        System.out.println(jasminResult.getJasminCode());
+
+        jasminResult.run();
 
     }
 
