@@ -577,6 +577,23 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 case "UnaryOp":
                     paramsOllir.add(visit(child,""));
                     break;
+                case "NewObject":
+                    String object=visit(child,"");
+                    String objecttype=object.split("\\.")[object.split("\\.").length-1];
+                    String temp2="temp_"+tempcount+"."+objecttype;
+                    tempcount++;
+                    tempList.add(String.format("%s :=.%s %s;\n",temp2,objecttype,object));
+                    paramsOllir.add(temp2);
+                    break;
+                case "NewIntArray":
+                    String newarray=visit(child,"");
+                    String temp3="temp_"+tempcount+".i32";
+                    tempcount++;
+                    tempList.add(String.format("%s :=.i32 %s;\n",temp3,newarray));
+                    paramsOllir.add(temp3);
+                    break;
+
+
 
             }
         }
