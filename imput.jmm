@@ -1,15 +1,18 @@
 class ArrayAccessOnInt {
-  boolean a;
+
     public static void main(String[] args) {
 
     }
 
+    public int teste(int[] a){
+  return 1;
+}
     public boolean foo() {
         boolean c;
-        int e;
-        a=!c;
-        e=(1+2+3);
+        int a;
+        ArrayAccessOnInt b;
 
+       a=b.teste(new int[2+3]);
 
         return c;
     }
