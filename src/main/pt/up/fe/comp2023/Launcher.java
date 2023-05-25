@@ -53,14 +53,14 @@ public class Launcher {
         }
         OllirOptimization ollir = new OllirOptimization();
         OllirResult ollirResult  = ollir.toOllir(result);
-
+/*
         JasminBackend jasminBackend = new BackendStage();
 
         JasminResult jasminResult = jasminBackend.toJasmin(ollirResult);
 
         System.out.println(jasminResult.getJasminCode());
 
-        jasminResult.run();
+        jasminResult.run();*/
 
     }
 
