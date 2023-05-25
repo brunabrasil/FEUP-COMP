@@ -46,6 +46,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         addVisit("Expr",this::dealWithExpr);
         addVisit("AssignmentArray",this::dealWithAssignmentArray);
         // Expressions
+        addVisit("Parenthesis",this::dealWithParenthesis);
         addVisit("UnaryOp",this::dealWithUnaryOp);
         addVisit("NewIntArray",this::dealWithNewIntArray);
         addVisit("Indexing",this::dealWithIndexing);
@@ -393,7 +394,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 needsTemp=true;
         }
         else if(scope=="STATEMENT"){
-            if(!parent.getKind().equals("IfElseStmt") && !parent.getKind().equals("WhileStmt") )
+            // TODO: CHECK THIS THING
+            if(parent.getKind().equals("IfElseStmt") || parent.getKind().equals("WhileStmt") )
                 needsTemp=true;
         }
 
@@ -683,6 +685,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         if(tempList.size()>0){
             ollir.append(String.join("\n",tempList));
         }
+        tempList.clear();
         ollir.append("if(");
         ollir.append(ifexpression);
         ollir.append(") goto whilebody_"+ifcounter+";").append("\n");
@@ -703,6 +706,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         if(tempList.size()>0){
             ollir.append(String.join("\n",tempList));
         }
+        tempList.clear();
         ollir.append("if(");
         ollir.append(ifexpression);
         ollir.append(") goto ifbody_"+ifcounter+";").append("\n\t");
@@ -839,5 +843,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         return  tempName;
     }
 
+    private String dealWithParenthesis(JmmNode jmmNode, String s) {
+
+        StringBuilder ollir=new StringBuilder();
+        String expression=visit(jmmNode.getJmmChild(0),"");
+        ollir.append(expression);
+
+        return  ollir.toString();
+    }
 
 }
