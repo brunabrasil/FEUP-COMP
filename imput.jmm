@@ -1,9 +1,19 @@
-import superClass;
-class normalClass extends superClass {
+class ArrayAccessOnInt {
+
     public static void main(String[] args) {
-        normalClass nc;
-        boolean a;
-        nc= new normalClass();
-        a = nc.foo2();
+
+    }
+
+    public int teste(int[] a){
+  return 1;
+}
+    public boolean foo() {
+        boolean c;
+        int a;
+        ArrayAccessOnInt b;
+
+       a=b.teste(new int[2+3]);
+
+        return c;
     }
 }
