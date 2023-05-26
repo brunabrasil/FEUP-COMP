@@ -5,10 +5,8 @@ class Test {
 
   public boolean foo() {
         boolean result;
-         if(!a && !b){
+         while(a){
                   result = a;
-                } else {
-        			result = b;
                 }
 
         return true;

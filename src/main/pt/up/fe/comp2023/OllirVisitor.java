@@ -697,8 +697,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         scope="STATEMENT";
         StringBuilder ollir=new StringBuilder();
 
-
-        String ifexpression=visit(jmmNode.getJmmChild(0),"");
+        // In visit it sends parameter so that if its a class field it creates a temporary
+        String ifexpression=visit(jmmNode.getJmmChild(0),"parameter");
         if(tempList.size()>0){
             ollir.append(String.join("\n",tempList));
         }
