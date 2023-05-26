@@ -595,9 +595,6 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     tempList.add(String.format("%s :=.array.i32 %s;\n",temp3,newarray));
                     paramsOllir.add(temp3);
                     break;
-
-
-
             }
         }
 
@@ -853,8 +850,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
     private String dealWithUnaryOp(JmmNode jmmNode, String s) {
 
-
-        String child = visit(jmmNode.getChildren().get(0),"");
+        // In visit its "parameter" because i dont want to add another string in the identifier field if
+        String child = visit(jmmNode.getChildren().get(0),"parameter");
 
 
         var tempName="temp_"+tempcount+".bool";

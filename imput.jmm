@@ -1,19 +1,13 @@
-class ArrayAccessOnInt {
+class Test {
 
-    public static void main(String[] args) {
+    boolean a;
+    boolean b;
 
-    }
+  public boolean foo() {
 
-    public int teste( ArrayAccessOnInt a){
-  return 1;
-}
-    public boolean foo() {
-        boolean c;
-        int a;
-        ArrayAccessOnInt b;
 
-       a=b.teste(new ArrayAccessOnInt());
+        b = !a && false;
 
-        return c;
-    }
+        return !b;
+  }
 }
