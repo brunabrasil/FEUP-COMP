@@ -4,10 +4,13 @@ class Test {
     boolean b;
 
   public boolean foo() {
+        boolean result;
+         if(!a && !b){
+                  result = a;
+                } else {
+        			result = b;
+                }
 
-
-        b = !a && false;
-
-        return !b;
+        return true;
   }
 }
