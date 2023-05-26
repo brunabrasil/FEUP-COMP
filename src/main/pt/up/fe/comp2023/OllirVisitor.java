@@ -402,6 +402,12 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             if(parent.getKind().equals("IfElseStmt") || parent.getKind().equals("WhileStmt") )
                 needsTemp=true;
         }
+        else if(scope=="EXPRESSION"){
+            //if(parent.getKind().equals("Parenthesis")){
+                needsTemp=true;
+           // }
+        }
+
 
 
         String left=visit(jmmNode.getJmmChild(0));
@@ -761,7 +767,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
 
     private String dealWithIndexing(JmmNode jmmNode, String s) {
-
+        scope="EXPRESSION";
         StringBuilder ollir=new StringBuilder();
 
         String callertemp=visit(jmmNode.getJmmChild(0));
@@ -878,7 +884,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     }
 
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
-
+        scope="EXPRESSION";
         StringBuilder ollir=new StringBuilder();
         String expression=visit(jmmNode.getJmmChild(0),"");
         ollir.append(expression);
