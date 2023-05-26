@@ -6,8 +6,7 @@ import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 
-import java.io.File;
-import java.io.FileWriter;
+
 import java.util.*;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
@@ -355,6 +354,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                 String tempName="temp_"+tempcount;
                 tempcount++;
                 StringBuilder ollir=new StringBuilder();
+                System.out.println("IN IDENTIFIER TYPE:"+OllirTemplates.typeTemplate(variable.getType()));
                 ollir.append(String.format("%s%s :=%s %s;\n",tempName,OllirTemplates.typeTemplate(variable.getType()),OllirTemplates.typeTemplate(variable.getType()),OllirTemplates.getfieldTemplate(variable)));
                 tempList.add(ollir.toString());
                 return tempName+OllirTemplates.typeTemplate(variable.getType());
@@ -544,6 +544,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String objectName=jmmNode.get("name");
         // TODO: ADD INVOKe SPECIAL
         //tempList.add(String.format("%s",OllirTemplates.objectInitTemplate(objectName)))
+        if(jmmNode.getJmmParent().getKind().equals("CallMethod")){
+            var temp="temp_"+tempcount+".";
+            tempcount++;
+            tempList.add(String.format("%s%s :=.%s %s;\n",temp,objectName,objectName,OllirTemplates.objectInitTemplate(objectName)));
+            tempList.add(String.format("%s\n",OllirTemplates.objectInstanceTemplate(temp,objectName)));
+            return  temp+objectName;
+        }
         return OllirTemplates.objectInitTemplate(objectName);
     }
 
@@ -618,7 +625,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     }
     private String dealWithLength(JmmNode jmmNode, String s) {
         scope="LENGTH";
-        String caller=visit(jmmNode.getJmmChild(0));
+        // In visit it sends parameter so that if its a class field it creates a temporary//
+        String caller=visit(jmmNode.getJmmChild(0),"parameter");
         StringBuilder ollir=new StringBuilder();
 
         var parent=jmmNode.getJmmParent();
@@ -781,6 +789,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         if(variableTypes.contains(jmmNode.getJmmChild(1).getKind())){
 
             String type=index.split("\\.")[index.split("\\.").length-1];
+            System.out.println("In INDEXING Type:"+type);
             tempName="temp_"+tempcount+"."+type;
             tempcount++;
             tempList.add(String.format("%s :=.%s %s;\n",tempName,type,index));
