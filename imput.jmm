@@ -1,14 +1,13 @@
-class Test {
+import io;
 
-    boolean a;
-    boolean b;
+class normalClass{
 
-  public boolean foo() {
-        boolean result;
-         while(a){
-                  result = a;
-                }
+    public static void main(String[] args) {
+        normalClass nc;
+        int a;
+        io i;
+        i = new io();
 
-        return true;
-  }
+        a = i.func(2,io.foo(io.inner(),io.inner2()),io.foo2());
+    }
 }

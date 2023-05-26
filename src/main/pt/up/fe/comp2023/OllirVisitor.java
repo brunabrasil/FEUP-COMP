@@ -20,6 +20,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private Integer ifcounter=0;
     private String currentAssignmentType;
     private String currentCallMethodName;
+    private Boolean isImportFunc;
     private Type assignType;
     private List<String> tempList= new ArrayList<>();
     private final List<String> statements = Arrays.asList("Stmt","IfElseStmt","WhileStmt","Expr","Assignment","AssignmentArray");
@@ -106,9 +107,11 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         for(JmmNode child : jmmNode.getChildren()){
             if (child.getKind().equals("Declaration")){
                 fields.add(visit(child,""));
+
             }
             else {
                 classBody.add(visit(child,""));
+                isImportFunc=false;
             }
         }
 
@@ -157,6 +160,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         this.scope="METHOD";
         for (JmmNode child : jmmNode.getChildren()) {
             String ollirChild = visit(child, "");
+            isImportFunc=false;
             if(ollirChild!="")
                 body.add(ollirChild);
         }
@@ -466,7 +470,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             // Its a variable thats from an import or from the extended class
             else{
                 functionType=new Type("void",false);
-                if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
+                if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod") || parent.getKind().equals("IfElseStmt") ||parent.getKind().equals("WhileStmt") ){
                     functionType=assignType;
                     if(parent.getKind().equals("CallMethod")){
                         functionType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
@@ -487,7 +491,12 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             if(parent.getKind().equals("Assignment") || parent.getKind().equals("BinaryOp") || parent.getKind().equals("CallMethod")){
                 needsType=true;
                 if(parent.getKind().equals("CallMethod")){
-                    returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
+                    if(isImportFunc){
+                        returnType=new Type("void",false);
+                    }
+                    else{
+                        returnType=this.table.getParamFromNumber(currentCallMethodName, parent.getChildren().indexOf(jmmNode));
+                    }
                 }
             }
             if(this.table.getClassName().equals(caller)){
@@ -635,6 +644,11 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             if(this.table.getSuper().equals(caller))
                 return false;
         }
+        var checkIfImport=caller.split("\\.")[caller.split("\\.").length-1];
+
+        if(checkIfImport.equals(this.table.getSuper()) || table.getImports().contains(checkIfImport)){
+            isImportFunc=true;
+        }
         return  true;
     }
 
@@ -695,6 +709,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
     private String dealWithWhile(JmmNode jmmNode, String s) {
         scope="STATEMENT";
+        assignType=new Type("boolean",false);
         StringBuilder ollir=new StringBuilder();
 
         // In visit it sends parameter so that if its a class field it creates a temporary
@@ -718,6 +733,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
     private String dealWithIfElse(JmmNode jmmNode, String s) {
         scope="STATEMENT";
+        assignType=new Type("boolean",false);
         StringBuilder ollir=new StringBuilder();
         // In visit it sends parameter so that if its a class field it creates a temporary
         String ifexpression=visit(jmmNode.getJmmChild(0),"parameter");
@@ -750,8 +766,8 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
 
         String callertemp=visit(jmmNode.getJmmChild(0));
         var callerparts=callertemp.split("\\.");
-        System.out.println("CAllerTemp:"+callertemp);
-        System.out.println("CallerParts:"+Arrays.toString(callerparts));
+        //System.out.println("CAllerTemp:"+callertemp);
+        //System.out.println("CallerParts:"+Arrays.toString(callerparts));
 
         boolean needsTemp=false;
         String index=visit(jmmNode.getJmmChild(1));
