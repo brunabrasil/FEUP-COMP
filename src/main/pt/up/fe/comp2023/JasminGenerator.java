@@ -172,10 +172,16 @@ public class JasminGenerator {
             case BINARYOPER  ->
                     stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
             case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
+            /*case BRANCH->
+                    stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable)).toString();*/
+            case GOTO ->
+                    stringBuilder.append(dealWithGOTO((GotoInstruction) instruction, varTable)).toString();
             default -> "Error";
         };
     }
-
+    private String dealWithGOTO(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
+        return String.format("goto %s\n", instruction.getLabel());
+    }
     private String dealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
         Operand operand = (Operand) instruction.getDest();
@@ -340,11 +346,7 @@ public class JasminGenerator {
 
                 // Compare left operand
                 stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
-                this.decrementStackCounter(1);
-
-                // Compare right operand
                 stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
-                this.decrementStackCounter(1);
 
                 stringBuilder.append("iconst_1\n")
                         .append("goto ").append(this.getEndIfLabel()).append("\n")
@@ -352,8 +354,7 @@ public class JasminGenerator {
                         .append("iconst_0\n")
                         .append(this.getEndIfLabel()).append(":\n");
 
-                // iconst
-                this.incrementStackCounter(1);
+                this.decrementStackCounter(1);
             }
             case NOTB -> {
                 String operand = loadElement(instruction.getLeftOperand(), varTable);
@@ -365,8 +366,6 @@ public class JasminGenerator {
                         .append(this.getTrueLabel()).append(":\n")
                         .append("iconst_0\n")
                         .append(this.getEndIfLabel()).append(":\n");
-
-                // No need to change stack, load increments 1, ifne would dec.1 and iconst would inc.1
             }
             default -> {
                 return "Error in BooleansOperations\n";
