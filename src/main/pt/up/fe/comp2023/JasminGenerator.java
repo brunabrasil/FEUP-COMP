@@ -184,7 +184,7 @@ public class JasminGenerator {
             stringBuilder.append(this.loadElement(operand, varTable));
             stringBuilder.append("\tisub\n");
         }
-        
+
         return stringBuilder.toString();
     }
     private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -340,8 +340,8 @@ public class JasminGenerator {
     }
 
     private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        OperationType ot = instruction.getOperation().getOpType();
         StringBuilder stringBuilder = new StringBuilder();
+        OperationType ot = instruction.getOperation().getOpType();
 
         switch (instruction.getOperation().getOpType()) {
             case LTH, GTE -> {
@@ -360,17 +360,28 @@ public class JasminGenerator {
                 this.decrementStackCounter(1);
             }
             case ANDB -> {
-                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
+                // String ifeq = "ifeq " + this.getTrueLabel() + "\n";
 
-                // Compare left operand
-                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
-                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
+                // // Compare left operand
+                // stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
+                // stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
 
-                stringBuilder.append("iconst_1\n")
-                        .append("goto ").append(this.getEndIfLabel()).append("\n")
-                        .append(this.getTrueLabel()).append(":\n")
-                        .append("iconst_0\n")
-                        .append(this.getEndIfLabel()).append(":\n");
+                // stringBuilder.append("iconst_1\n")
+                //         .append("goto ").append(this.getEndIfLabel()).append("\n")
+                //         .append(this.getTrueLabel()).append(":\n")
+                //         .append("iconst_0\n")
+                //         .append(this.getEndIfLabel()).append(":\n");
+
+
+                Element leftOperand = instruction.getLeftOperand();
+                Element rightOperand = instruction.getRightOperand();
+
+                String leftOperandString = loadElement(leftOperand, varTable);
+                String rightOperandString = loadElement(rightOperand, varTable);
+
+                stringBuilder.append(leftOperandString);
+                stringBuilder.append(rightOperandString);
+                stringBuilder.append("\tiand\n");
 
                 this.decrementStackCounter(1);
             }
