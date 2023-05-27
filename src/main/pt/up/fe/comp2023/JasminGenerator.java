@@ -165,19 +165,27 @@ public class JasminGenerator {
             case ASSIGN -> stringBuilder.append(dealWithASSIGN((AssignInstruction) instruction, varTable)).toString();
             case CALL -> stringBuilder.append(dealWithCALL((CallInstruction) instruction, varTable)).toString();
             case RETURN -> stringBuilder.append(dealWithRETURN((ReturnInstruction) instruction, varTable)).toString();
-            case PUTFIELD ->
-                    stringBuilder.append(dealWithPUTFIELD((PutFieldInstruction) instruction, varTable)).toString();
-            case GETFIELD ->
-                    stringBuilder.append(dealWithGETFIELD((GetFieldInstruction) instruction, varTable)).toString();
-            case BINARYOPER  ->
-                    stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
+            case PUTFIELD -> stringBuilder.append(dealWithPUTFIELD((PutFieldInstruction) instruction, varTable)).toString();
+            case GETFIELD -> stringBuilder.append(dealWithGETFIELD((GetFieldInstruction) instruction, varTable)).toString();
+            case UNARYOPER -> stringBuilder.append(dealWithUNARYOPER((UnaryOpInstruction) instruction, varTable)).toString();
+            case BINARYOPER  -> stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
             case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
-            case BRANCH->
-                    stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable)).toString();
-            case GOTO ->
-                    stringBuilder.append(dealWithGOTO((GotoInstruction) instruction, varTable)).toString();
+            case GOTO -> stringBuilder.append(dealWithGOTO((GotoInstruction) instruction, varTable)).toString();
+            case BRANCH-> stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable)).toString();
             default -> "Error";
         };
+    }
+    private String dealWithUNARYOPER(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable){
+        StringBuilder stringBuilder = new StringBuilder();
+        Element operand = instruction.getOperand();
+        OperationType opType = instruction.getOperation().getOpType();
+
+        if(opType == OperationType.NOTB){
+            stringBuilder.append(this.loadElement(operand, varTable));
+            stringBuilder.append("\tisub\n");
+        }
+        
+        return stringBuilder.toString();
     }
     private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
 
