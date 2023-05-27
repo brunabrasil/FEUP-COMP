@@ -23,60 +23,53 @@ public class ConstantPropagation extends AJmmVisitor<HashMap<String, JmmNode>, S
 
     }
 
-    private String WhileStmtVisit(JmmNode jmmNode, HashMap<String, JmmNode> constMap) {
+    private String WhileStmtVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
         JmmNode statement = jmmNode.getJmmChild(1);
-        Set<String> variablesInsideWhile = getVariablesAssigned(statement);
-        System.out.println("Variables assigned" + variablesInsideWhile);
-        for(String variable: variablesInsideWhile){
-            constMap.remove(variable);
-        }
-        JmmNode expression = jmmNode.getJmmChild(0);
-        visit(expression,constMap);
-        return "";
-    }
+        visit(statement,constantsMap);
 
-    private Set<String> getVariablesAssigned(JmmNode whileNode){
-        Set<String> variablesAssigned = new HashSet<>();
-        for(JmmNode child : whileNode.getChildren()){
+        for(JmmNode child: statement.getChildren()){
             if(child.getKind().equals("Assignment")){
-                variablesAssigned.add(child.get("var"));
+                constantsMap.remove(child.get("var"));
             }
         }
-        return variablesAssigned;
+
+        JmmNode expression = jmmNode.getJmmChild(0);
+        visit(expression,constantsMap);
+        return "";
     }
 
-    private String ifElseStmtVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
-        JmmNode condition = jmmNode.getJmmChild(0);
-        JmmNode thenStatement = jmmNode.getJmmChild(1);
-        JmmNode elseStatement = jmmNode.getJmmChild(2);
+    private String ifElseStmtVisit(JmmNode node, HashMap<String, JmmNode> constantsMap) {
+        JmmNode condition = node.getJmmChild(0);
+        JmmNode thenStatement = node.getJmmChild(1);
+        JmmNode elseStatement = node.getJmmChild(2);
 
+        visit(condition,constantsMap);
+        visit(thenStatement,constantsMap);
+        visit(elseStatement,constantsMap);
 
-        if(condition.getKind().equals("Boolean")){
-            boolean expressionValue = Boolean.parseBoolean(condition.get("value"));
-            if(expressionValue){
-                visit(thenStatement, constantsMap);
-            }else{
-                visit(elseStatement, constantsMap);
+        for(JmmNode child : thenStatement.getChildren()){
+            if(child.getKind().equals("Assignment")){
+                constantsMap.remove(child.get("var"));
             }
-        }else{
-            Set<String> variablesIf = getVariablesAssigned(thenStatement);
-            Set<String> variablesElse = getVariablesAssigned(elseStatement);
-            variablesIf.addAll(variablesElse);
-            for(String variable: variablesIf){
-                constantsMap.remove(variable);
+        }
+
+        for(JmmNode child : elseStatement.getChildren()){
+            if(child.getKind().equals("Assignment")){
+                constantsMap.remove(child.get("var"));
             }
         }
         return "";
     }
 
-    private String identifierVisit(JmmNode jmmNode, HashMap<String, JmmNode> constantsMap) {
-        JmmNode constant = constantsMap.get(jmmNode.get("value"));
-        //if it is in the constmap
+    private String identifierVisit(JmmNode node, HashMap<String, JmmNode> constantsMap) {
+        JmmNode constant = constantsMap.get(node.get("value"));
+
+        //if constant is in the map
         if (constant != null) {
             JmmNode newLiteral = new JmmNodeImpl(constant.getKind());
             newLiteral.put("value", constant.get("value"));
-            ConstantFolding.replaceNode(jmmNode, newLiteral);
-            hasChanged = true;
+            //replace node with the value
+            replaceNode(node, newLiteral);
             return "changed";
         }
         return "";
@@ -84,30 +77,49 @@ public class ConstantPropagation extends AJmmVisitor<HashMap<String, JmmNode>, S
 
     private String assignmentVisit(JmmNode node, HashMap<String, JmmNode> constantsMap) {
         JmmNode rightSide = node.getChildren().get(0);
+        visit(rightSide, constantsMap);
+
+        //if it is a constant, add to the map
         if(rightSide.getKind().equals("Integer") || rightSide.getKind().equals("Boolean")){
             constantsMap.put(node.get("var"), rightSide);
-            node.getJmmParent().removeJmmChild(node);
-        }else{
-            visit(rightSide, constantsMap);
+        }
+        //if not, remove it
+        else{
+            constantsMap.remove(node.get("var"));
         }
         return "";
     }
 
     private String methodVisit(JmmNode node, HashMap<String, JmmNode> constantsMap) {
-        HashMap<String, JmmNode> newConstantsMap = new HashMap<>();
+        HashMap<String, JmmNode> newMap = new HashMap<>();
         for (int i = 0; i < node.getChildren().size(); i++) {
             JmmNode child = node.getJmmChild(i);
-            visit(child, newConstantsMap);
+            visit(child, newMap);
         }
         return "";
 
     }
 
-    private String defaultVisit(JmmNode jmmNode, HashMap<String, JmmNode> constMap) {
-        for(JmmNode child : jmmNode.getChildren()){
-            visit(child, constMap);
+    private String defaultVisit(JmmNode node, HashMap<String, JmmNode> constantsMap) {
+        for(JmmNode child : node.getChildren()){
+            visit(child, constantsMap);
         }
         return "";
+    }
+
+    private void replaceNode(JmmNode oldNode, JmmNode newNode){
+        JmmNode parent = oldNode.getJmmParent();
+        if(parent == null){
+            return;
+        }
+
+        //get index of the node
+        int index = parent.getChildren().indexOf(oldNode);
+
+        //replace
+        parent.setChild(newNode,index);
+        hasChanged = true;
+
     }
 
     public boolean hasChanged() {
