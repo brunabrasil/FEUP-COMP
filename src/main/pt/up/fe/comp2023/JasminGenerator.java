@@ -184,7 +184,7 @@ public class JasminGenerator {
             stringBuilder.append(this.loadElement(operand, varTable));
             stringBuilder.append("\tisub\n");
         }
-
+        
         return stringBuilder.toString();
     }
     private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -340,137 +340,55 @@ public class JasminGenerator {
     }
 
     private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        OperationType ot = instruction.getOperation().getOpType();
         StringBuilder stringBuilder = new StringBuilder();
-        Element leftOperand = instruction.getLeftOperand();
-        Element rightOperand = instruction.getRightOperand();
-        OperationType opType = instruction.getOperation().getOpType();
 
-        String leftOperandString = loadElement(leftOperand, varTable);
-        String rightOperandString = loadElement(rightOperand, varTable);
+        switch (instruction.getOperation().getOpType()) {
+            case LTH, GTE -> {
+                String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
+                String rightOperand = loadElement(instruction.getRightOperand(), varTable);
 
-        if(opType == OperationType.LTH || opType == OperationType.GTE) {
-            stringBuilder.append(leftOperandString);
-            String firstLabel = "", secondLabel = "";
+                stringBuilder.append(leftOperand)
+                        .append(rightOperand)
+                        .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
 
-            if(opType == OperationType.LTH){
-                firstLabel = "LTH_" + this.getEndIfLabel();
-                secondLabel = "LTH_" + this.getEndIfLabel();
-            } else {
-                firstLabel = "GTE_" + this.getEndIfLabel();
-                secondLabel = "GTE_" + this.getEndIfLabel();
+                this.decrementStackCounter(1);
             }
-            
-            if (rightOperand.isLiteral() && ((LiteralElement) rightOperand).getLiteral().equals("0")) {
-                if(opType == OperationType.LTH)
-                    stringBuilder.append("\tiflt ").append(firstLabel).append("\n");
-                else stringBuilder.append("\tifge ").append(firstLabel).append("\n");
+            case ANDB -> {
+                String ifeq = "ifeq " + this.getTrueLabel() + "\n";
 
-                decrementStackCounter(1);
+                // Compare left operand
+                stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
+                stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
+
+                stringBuilder.append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
+
+                this.decrementStackCounter(1);
             }
-            else {
-                stringBuilder.append(rightOperandString);
-                if(opType == OperationType.LTH)
-                    stringBuilder.append("\tif_icmplt ").append(firstLabel).append("\n");
-                else stringBuilder.append("\tif_icmpge ").append(firstLabel).append("\n");
+            case NOTB -> {
+                String operand = loadElement(instruction.getLeftOperand(), varTable);
 
-                decrementStackCounter(2);
+                stringBuilder.append(operand)
+                        .append("ifne ").append(this.getTrueLabel()).append("\n")
+                        .append("iconst_1\n")
+                        .append("goto ").append(this.getEndIfLabel()).append("\n")
+                        .append(this.getTrueLabel()).append(":\n")
+                        .append("iconst_0\n")
+                        .append(this.getEndIfLabel()).append(":\n");
             }
-
-            // stringBuilder.append(MyJasminInstruction.iconst(0));
-            incrementStackCounter(1);
-            stringBuilder.append("\tgoto ").append(secondLabel).append("\n");
-            stringBuilder.append(firstLabel).append(":\n");
-            incrementStackCounter(1);
-            stringBuilder.append("\tgoto ").append(secondLabel).append("\n");
-            stringBuilder.append(secondLabel).append(":\n");
-
-        } else {
-            stringBuilder.append(leftOperandString);
-            stringBuilder.append(rightOperandString);
-
-            String inst = "";
-
-            switch (opType) {
-                case ADD -> {
-                    inst = "\tiadd\n";
-                }
-                case SUB -> {
-                    inst = "\tisub\n";
-                }
-                case MUL -> {
-                    inst = "\timul\n";
-                }
-                case DIV -> {
-                    inst = "\tidiv\n";
-                }
-                case ANDB -> {
-                    inst = "\tiand\n";
-                }
+            default -> {
+                return "Error in BooleansOperations\n";
             }
-
-            stringBuilder.append(inst);
         }
-
-        // StringBuilder stringBuilder = new StringBuilder();
-        // OperationType ot = instruction.getOperation().getOpType();
-
-        // switch (instruction.getOperation().getOpType()) {
-        //     case LTH, GTE -> {
-        //         String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
-        //         String rightOperand = loadElement(instruction.getRightOperand(), varTable);
-
-        //         stringBuilder.append(leftOperand)
-        //                 .append(rightOperand)
-        //                 .append(this.dealWithRelationalOperation(ot, this.getTrueLabel()))
-        //                 .append("iconst_1\n")
-        //                 .append("goto ").append(this.getEndIfLabel()).append("\n")
-        //                 .append(this.getTrueLabel()).append(":\n")
-        //                 .append("iconst_0\n")
-        //                 .append(this.getEndIfLabel()).append(":\n");
-
-        //         this.decrementStackCounter(1);
-        //     }
-        //     case ANDB -> {
-        //         // String ifeq = "ifeq " + this.getTrueLabel() + "\n";
-
-        //         // // Compare left operand
-        //         // stringBuilder.append(loadElement(instruction.getLeftOperand(), varTable)).append(ifeq);
-        //         // stringBuilder.append(loadElement(instruction.getRightOperand(), varTable)).append(ifeq);
-
-        //         // stringBuilder.append("iconst_1\n")
-        //         //         .append("goto ").append(this.getEndIfLabel()).append("\n")
-        //         //         .append(this.getTrueLabel()).append(":\n")
-        //         //         .append("iconst_0\n")
-        //         //         .append(this.getEndIfLabel()).append(":\n");
-
-
-        //         Element leftOperand = instruction.getLeftOperand();
-        //         Element rightOperand = instruction.getRightOperand();
-
-        //         String leftOperandString = loadElement(leftOperand, varTable);
-        //         String rightOperandString = loadElement(rightOperand, varTable);
-
-        //         stringBuilder.append(leftOperandString);
-        //         stringBuilder.append(rightOperandString);
-        //         stringBuilder.append("\tiand\n");
-
-        //         this.decrementStackCounter(1);
-        //     }
-        //     case NOTB -> {
-        //         String operand = loadElement(instruction.getLeftOperand(), varTable);
-
-        //         stringBuilder.append(operand)
-        //                 .append("ifne ").append(this.getTrueLabel()).append("\n")
-        //                 .append("iconst_1\n")
-        //                 .append("goto ").append(this.getEndIfLabel()).append("\n")
-        //                 .append(this.getTrueLabel()).append(":\n")
-        //                 .append("iconst_0\n")
-        //                 .append(this.getEndIfLabel()).append(":\n");
-        //     }
-        //     default -> {
-        //         return "Error in BooleansOperations\n";
-        //     }
-        // }
 
         this.conditional++;
         return stringBuilder.toString();
