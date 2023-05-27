@@ -180,6 +180,13 @@ public class JasminGenerator {
         String stringBuilder = "";
         Operand operand = (Operand) instruction.getDest();
 
+        if (operand instanceof ArrayOperand aoperand) {
+            stringBuilder += String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable));
+            this.incrementStackCounter(1);
+
+            stringBuilder += loadElement(aoperand.getIndexOperands().get(0), varTable);
+        }
+
         stringBuilder += dealWithInstruction(instruction.getRhs(), varTable, new HashMap<String, Instruction>());
 
         // If it is an object reference we should not update the table
@@ -199,6 +206,10 @@ public class JasminGenerator {
                     stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((ClassType) instruction.getFirstArg().getType()).getName());
             case invokestatic ->
                     stringBuilder += this.dealWithInvoke(instruction, varTable, callType, ((Operand) instruction.getFirstArg()).getName());
+            case arraylength -> {
+                    stringBuilder += this.loadElement(instruction.getFirstArg(), varTable);
+                    stringBuilder += "arraylength\n";
+            }
             case NEW ->
                     stringBuilder += this.dealWithNewObject(instruction, varTable);
             default -> {
@@ -221,7 +232,7 @@ public class JasminGenerator {
                 this.decrementStackCounter(1);
                 returnString += "ireturn";
             }
-            case OBJECTREF -> {
+            case ARRAYREF, OBJECTREF -> {
                 returnString = loadElement(instruction.getOperand(), varTable);
 
                 this.decrementStackCounter(1);
@@ -269,7 +280,12 @@ public class JasminGenerator {
         Element e = instruction.getFirstArg();
         String stringBuilder = "";
 
-        if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
+        if (e.getType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
+            stringBuilder += this.loadElement(instruction.getListOfOperands().get(0), varTable);
+
+            stringBuilder += "newarray int\n";
+        }
+        else if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
             this.incrementStackCounter(2);
 
             stringBuilder += "new " + this.getOjectClassName(((Operand)e).getName()) + "\ndup\n";
@@ -420,6 +436,15 @@ public class JasminGenerator {
                             "bipush " + num :
                     "iconst_" + num) + "\n";
         }
+        else if (element instanceof ArrayOperand operand) {
+            String stringBuilder = String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
+            this.incrementStackCounter(1);
+
+            stringBuilder += loadElement(operand.getIndexOperands().get(0), varTable);
+            this.decrementStackCounter(1);
+
+            return stringBuilder + "iaload\n";
+        }
         else if (element instanceof Operand operand) {
             switch (operand.getType().getTypeOfElement()) {
                 case THIS -> {
@@ -430,7 +455,7 @@ public class JasminGenerator {
                     this.incrementStackCounter(1);
                     return String.format("iload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
-                case OBJECTREF -> {
+                case ARRAYREF, OBJECTREF -> {
                     this.incrementStackCounter(1);
                     return String.format("aload%s\n", this.getVirtualReg(operand.getName(), varTable));
                 }
@@ -447,13 +472,17 @@ public class JasminGenerator {
     }
 
     private String storeElement(Operand operand, HashMap<String, Descriptor> varTable) {
+        if (operand instanceof ArrayOperand) {
+            this.decrementStackCounter(3);
+            return "iastore\n";
+        }
 
         switch (operand.getType().getTypeOfElement()) {
             case INT32, BOOLEAN -> {
                 this.decrementStackCounter(1);
                 return String.format("istore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
-            case OBJECTREF -> {
+            case ARRAYREF, OBJECTREF -> {
                 this.decrementStackCounter(1);
                 return String.format("astore%s\n", this.getVirtualReg(operand.getName(), varTable));
             }
