@@ -12,10 +12,6 @@ public class ConstantFolding extends AJmmVisitor<String, String> {
         addVisit("BinaryOp", this::foldBinaryOp);
         addVisit("UnaryOp", this::foldUnaryOp);
         setDefaultVisit(this::defaultVisit);
-
-    }
-    public void foldConstantIf(JmmNode expr, JmmNode jmmNode) {
-        replaceNode(jmmNode, expr);
     }
 
     public static void replaceNode (JmmNode nodeToReplace, JmmNode newNode) {
@@ -24,7 +20,9 @@ public class ConstantFolding extends AJmmVisitor<String, String> {
             return;
         }
         int index = parent.getChildren().indexOf(nodeToReplace);
+        //remove the node from the parent
         parent.removeJmmChild(nodeToReplace);
+        //add the new node
         parent.add(newNode, index);
         newNode.setParent(parent);
     }
@@ -32,28 +30,50 @@ public class ConstantFolding extends AJmmVisitor<String, String> {
     private String foldUnaryOp(JmmNode node, String s) {
         JmmNode child = node.getJmmChild(0);
         JmmNode newLiteral = new JmmNodeImpl("Boolean");
-        newLiteral.put("value", child.get("value").equals("true") ? "false" : "true");
-        replaceNode(node, newLiteral);
-        hasChanged = true;
+
+        if(child.getKind().equals("Boolean")){
+            //alter the boolean value
+            newLiteral.put("value", child.get("value").equals("true") ? "false" : "true");
+            //replace with the new value
+            replaceNode(node, newLiteral);
+            hasChanged = true;
+
+        }
         return "";
     }
 
     public String foldBinaryOp(JmmNode node, String s) {
         JmmNode left = node.getJmmChild(0);
         JmmNode right = node.getJmmChild(1);
+        visit(left);
+        visit(right);
+
+        //operations with int
         if(left.getKind().equals("Integer") && right.getKind().equals("Integer")){
             int leftValue = Integer.parseInt(left.get("value"));
             int rightValue = Integer.parseInt(right.get("value"));
             boolean resultBoolean = false;
             int result = 0;
             switch (node.get("op")){
-                case "+" -> result = leftValue + rightValue;
-                case "-" -> result = leftValue - rightValue;
-                case "*" -> result = leftValue * rightValue;
-                case "/" -> result =  leftValue / rightValue;
-                case "<" -> resultBoolean = leftValue < rightValue;
+                case "+":
+                    result = leftValue + rightValue;
+                    break;
+                case "-":
+                    result = leftValue - rightValue;
+                    break;
+                case "*":
+                    result = leftValue * rightValue;
+                    break;
+                case "/":
+                    result =  leftValue / rightValue;
+                    break;
+                case "<":
+                    resultBoolean = leftValue < rightValue;
+                    break;
             }
+
             JmmNode newLiteral;
+            //operation < results in a boolean
             if(node.get("op").equals("<")){
                 newLiteral = new JmmNodeImpl("Boolean");
                 newLiteral.put("value", Boolean.toString(resultBoolean));
@@ -68,6 +88,7 @@ public class ConstantFolding extends AJmmVisitor<String, String> {
             hasChanged = true;
 
         }
+        //operation with booleans (&&)
         else if(left.getKind().equals("Boolean") && right.getKind().equals("Boolean")){
             if(node.get("op").equals("&&")){
                 JmmNode newLiteral;
