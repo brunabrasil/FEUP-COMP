@@ -172,12 +172,23 @@ public class JasminGenerator {
             case BINARYOPER  ->
                     stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
             case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
-            /*case BRANCH->
-                    stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable)).toString();*/
+            case BRANCH->
+                    stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable)).toString();
             case GOTO ->
                     stringBuilder.append(dealWithGOTO((GotoInstruction) instruction, varTable)).toString();
             default -> "Error";
         };
+    }
+    private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
+
+        String stringBuilder = this.loadElement(instruction.getOperands().get(0), varTable) +
+                "ifeq " +
+                instruction.getLabel() +
+                "\n";
+        
+        this.decrementStackCounter(1);
+
+        return stringBuilder;
     }
     private String dealWithGOTO(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
         return String.format("goto %s\n", instruction.getLabel());
