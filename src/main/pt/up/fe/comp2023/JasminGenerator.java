@@ -181,13 +181,12 @@ public class JasminGenerator {
     }
     private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
 
-        String stringBuilder = this.loadElement(instruction.getOperands().get(0), varTable) +
+        String stringBuilder = this.loadElement(instruction.getOperands().get(1), varTable) +
                 "ifeq " +
                 instruction.getLabel() +
                 "\n";
-        
-        this.decrementStackCounter(1);
 
+        this.decrementStackCounter(1);
         return stringBuilder;
     }
     private String dealWithGOTO(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
