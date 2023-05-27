@@ -593,6 +593,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
                     break;
                 case "Indexing":
                     String array=visit(child,"parameter");
+                    System.out.println("IN GETPARAMETER LIST:"+array);
                     String arraytype=array.split("\\.")[array.split("\\.").length-1];
                     String temp="temp_"+tempcount+"."+arraytype;
                     tempList.add(String.format("%s :=.%s %s;\n",temp,arraytype,array));
@@ -778,7 +779,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         scope="EXPRESSION";
         StringBuilder ollir=new StringBuilder();
 
-        String callertemp=visit(jmmNode.getJmmChild(0));
+        String callertemp=visit(jmmNode.getJmmChild(0),"parameter");
         var callerparts=callertemp.split("\\.");
         //System.out.println("CAllerTemp:"+callertemp);
         //System.out.println("CallerParts:"+Arrays.toString(callerparts));
@@ -815,8 +816,10 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
             tempName="temp_"+tempcount+"."+returnType;
             tempcount++;
             tempList.add(String.format("%s :=.%s %s;\n",tempName,returnType,returnString));
+            System.out.println("INDEXING last if retunn:"+tempName);
             return  tempName;
         }
+        System.out.println("INDEXING last retunn:"+returnString);
         return  returnString;
 
     }
