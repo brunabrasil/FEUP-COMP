@@ -298,10 +298,10 @@ public class JasminGenerator {
     }
 
     private String dealWithBooleanOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        OperationType ot = instruction.getUnaryOperation().getOpType();
+        OperationType ot = instruction.getOperation().getOpType();
         StringBuilder stringBuilder = new StringBuilder();
 
-        switch (instruction.getUnaryOperation().getOpType()) {
+        switch (instruction.getOperation().getOpType()) {
             case LTH, GTE -> {
                 String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
                 String rightOperand = loadElement(instruction.getRightOperand(), varTable);
@@ -366,7 +366,13 @@ public class JasminGenerator {
     private String getEndIfLabel() {
         return "myEndIf" + this.conditional;
     }
-
+    private String dealWithRelationalOperation(OperationType opType, String tLabel) {
+        return switch (opType) {
+            case LTH -> String.format("if_icmpge %s\n", tLabel);
+            case GTE -> String.format("if_icmplt %s\n", tLabel);
+            default -> "Error in RelationalOperations\n";
+        };
+    }
     private String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType callType, String className){
         StringBuilder stringBuilder = new StringBuilder();
 
