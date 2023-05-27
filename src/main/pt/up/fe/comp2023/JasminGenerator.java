@@ -181,7 +181,7 @@ public class JasminGenerator {
     }
     private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
 
-        String stringBuilder = this.loadElement(instruction.getOperands().get(1), varTable) +
+        String stringBuilder = this.loadElement(instruction.getOperands().get(0), varTable) +
                 "ifeq " +
                 instruction.getLabel() +
                 "\n";
