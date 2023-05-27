@@ -373,17 +373,17 @@ public class JasminGenerator {
                 //         .append(this.getEndIfLabel()).append(":\n");
 
 
-                Element leftOperand = instruction.getLeftOperand();
-                Element rightOperand = instruction.getRightOperand();
+                // Element leftOperand = instruction.getLeftOperand();
+                // Element rightOperand = instruction.getRightOperand();
 
-                String leftOperandString = loadElement(leftOperand, varTable);
-                String rightOperandString = loadElement(rightOperand, varTable);
+                // String leftOperandString = loadElement(leftOperand, varTable);
+                // String rightOperandString = loadElement(rightOperand, varTable);
 
-                stringBuilder.append(leftOperandString);
-                stringBuilder.append(rightOperandString);
-                stringBuilder.append("\tiand\n");
+                // stringBuilder.append(leftOperandString);
+                // stringBuilder.append(rightOperandString);
+                // stringBuilder.append("\tiand\n");
 
-                this.decrementStackCounter(1);
+                // this.decrementStackCounter(1);
             }
             case NOTB -> {
                 String operand = loadElement(instruction.getLeftOperand(), varTable);
