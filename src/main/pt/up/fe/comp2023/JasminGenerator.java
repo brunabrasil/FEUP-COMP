@@ -180,7 +180,9 @@ public class JasminGenerator {
         String stringBuilder = "";
         Operand operand = (Operand) instruction.getDest();
 
-        if (operand instanceof ArrayOperand aoperand) {
+        if (operand instanceof ArrayOperand) {
+            ArrayOperand aoperand = (ArrayOperand) operand;
+
             stringBuilder += String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable));
             this.incrementStackCounter(1);
 
