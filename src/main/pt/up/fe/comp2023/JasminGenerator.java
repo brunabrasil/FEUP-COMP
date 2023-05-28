@@ -4,6 +4,7 @@ import org.specs.comp.ollir.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class JasminGenerator {
 
@@ -200,7 +201,7 @@ public class JasminGenerator {
     private String dealWithGOTO(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
         return String.format("goto %s\n", instruction.getLabel());
     }
-    private String dealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
+    private String olddealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
         String stringBuilder = "";
         Operand operand = (Operand) instruction.getDest();
 
@@ -221,6 +222,64 @@ public class JasminGenerator {
         }
 
         return stringBuilder;
+    }
+
+    private String dealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
+        
+        StringBuilder stringBuilder = new StringBuilder();
+
+        Operand operand = (Operand) instruction.getDest();
+        Element leftHandMostSymbol = instruction.getDest();
+        Instruction rightHandMostSymbol = instruction.getRhs();
+        InstructionType instType = rightHandMostSymbol.getInstType();
+
+        if (operand instanceof ArrayOperand) {
+            ArrayOperand aoperand = (ArrayOperand) operand;
+
+            stringBuilder.append(String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable)));
+            this.incrementStackCounter(1);
+
+            stringBuilder.append(loadElement(aoperand.getIndexOperands().get(0), varTable));
+        }
+        else if(instType == InstructionType.BINARYOPER){
+            BinaryOpInstruction binaryExpression = (BinaryOpInstruction) rightHandMostSymbol;
+            OperationType sign = binaryExpression.getOperation().getOpType();
+
+            if(sign == OperationType.ADD || sign == OperationType.SUB || sign == OperationType.MUL || sign == OperationType.DIV){
+                String valueSign = "";
+                if(sign == OperationType.SUB) valueSign = "-";
+                String reg = this.getVirtualReg(((Operand) leftHandMostSymbol).getName(), varTable);
+
+                Element leftOperand = binaryExpression.getLeftOperand();
+                Element rightOperand = binaryExpression.getRightOperand();
+
+                if(!leftOperand.isLiteral() && rightOperand.isLiteral()){
+
+                    int value = Integer.parseInt(valueSign + ((LiteralElement) rightOperand).getLiteral());
+                    if((value >= -128 && value <= 127) &&
+                            Objects.equals(((Operand) leftOperand).getName(), ((Operand) leftHandMostSymbol).getName())){
+
+                        return "\tiinc " + reg + " " + value;
+                    }
+
+                } else if (leftOperand.isLiteral() && !rightOperand.isLiteral()){
+                    int value = Integer.parseInt(valueSign + ((LiteralElement) leftOperand).getLiteral());
+                    if((value >= -128 && value <= 127)  && Objects.equals(((Operand) rightOperand).getName(), ((Operand) leftHandMostSymbol).getName())){
+                        return "\tiinc " + reg + " " + value;
+                    }
+                }
+            }
+        }
+
+        stringBuilder.append(dealWithInstruction(rightHandMostSymbol, varTable, new HashMap<String, Instruction>()));
+
+        // If it is an object reference we should not update the table
+        if(!(operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF) && instruction.getRhs() instanceof CallInstruction)) {
+            stringBuilder.append(this.storeElement(operand, varTable));
+        }
+
+        return stringBuilder.toString();
+
     }
 
     private String dealWithCALL(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
