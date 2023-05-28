@@ -188,6 +188,7 @@ public class JasminGenerator {
         
         return stringBuilder.toString();
     }
+
     private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
 
         String stringBuilder = this.loadElement(instruction.getOperands().get(0), varTable) +
@@ -198,30 +199,9 @@ public class JasminGenerator {
         this.decrementStackCounter(1);
         return stringBuilder;
     }
+
     private String dealWithGOTO(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
         return String.format("goto %s\n", instruction.getLabel());
-    }
-    private String olddealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String stringBuilder = "";
-        Operand operand = (Operand) instruction.getDest();
-
-        if (operand instanceof ArrayOperand) {
-            ArrayOperand aoperand = (ArrayOperand) operand;
-
-            stringBuilder += String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable));
-            this.incrementStackCounter(1);
-
-            stringBuilder += loadElement(aoperand.getIndexOperands().get(0), varTable);
-        }
-
-        stringBuilder += dealWithInstruction(instruction.getRhs(), varTable, new HashMap<String, Instruction>());
-
-        // If it is an object reference we should not update the table
-        if(!(operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF) && instruction.getRhs() instanceof CallInstruction)) {
-            stringBuilder += this.storeElement(operand, varTable);
-        }
-
-        return stringBuilder;
     }
 
     private String dealWithASSIGN(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
