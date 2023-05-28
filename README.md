@@ -2,6 +2,16 @@
 
 For this project, you need to install [Java](https://jdk.java.net/), [Gradle](https://gradle.org/install/), and [Git](https://git-scm.com/downloads/) (and optionally, a [Git GUI client](https://git-scm.com/downloads/guis), such as TortoiseGit or GitHub Desktop). Please check the [compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) for Java and Gradle versions.
 
+## Group 8b
+
+| Name             | Number    | Distribution            |
+| ---------------- | --------- | ------------------ |
+| Bruna Marques      | 202007191 | 33%              |
+| Pedro Correia       | 202006199 | 33%               |
+| Vasco Guedes       | 202004395 | 33%                |
+
+Self-assessment: 19
+
 ## Project setup
 
 There are some import folders in the repository. Your development source code is inside the subfolder named ``src/main``. Specifically, your initially application is in the folder ``src/main/pt/up/fe/comp2023``, and the grammar is in the subfolder ``src/main/antlr/comp2023/grammar``. Finally, the subfolder named ``test`` contains your unit tests.
