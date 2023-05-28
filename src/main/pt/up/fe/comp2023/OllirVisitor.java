@@ -549,7 +549,7 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         String objectName=jmmNode.get("name");
         // TODO: ADD INVOKe SPECIAL
         //tempList.add(String.format("%s",OllirTemplates.objectInitTemplate(objectName)))
-        if(jmmNode.getJmmParent().getKind().equals("CallMethod")){
+        if(jmmNode.getJmmParent().getKind().equals("CallMethod") || jmmNode.getJmmParent().getKind().equals("Parenthesis")){
             var temp="temp_"+tempcount+".";
             tempcount++;
             tempList.add(String.format("%s%s :=.%s %s;\n",temp,objectName,objectName,OllirTemplates.objectInitTemplate(objectName)));
