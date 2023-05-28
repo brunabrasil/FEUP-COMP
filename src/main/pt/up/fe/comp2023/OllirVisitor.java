@@ -279,7 +279,12 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         this.currentAssignmentType=ollirType;
         this.assignType=variable.getType();
         // Expression stores what comes after "="
-        String expression=visit(jmmNode.getJmmChild(0),"");
+        String expression="";
+        if(classField)
+            expression=visit(jmmNode.getJmmChild(0),"classfield");
+        else
+            expression=visit(jmmNode.getJmmChild(0),"");
+
         // Check if temporary variables were created
         if(tempList.size()>0){
             ollir.append(String.join("\n", tempList));
@@ -860,8 +865,13 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
         tempList.clear();
 
         if(classField){
-            // TODO:
-            //HELP ME GOD
+            String tempname="temp_"+tempcount;
+            tempcount++;
+            Symbol type=new Symbol(new Type("int",true),varName);
+            // Creates this "tmp2.array.i32 :=.array.i32 getfield(this, test_arr.array.i32).array.i32;"
+            ollir.append(String.format("%s.array.i32 :=.array.i32 %s;\n",tempname,OllirTemplates.getfieldTemplate(type)));
+            // Creates things like this "tmp2[0.i32].i32 :=.i32 14.i32;"
+            ollir.append(String.format("%s[%s]%s :=%s %s;\n",tempname,arrayIndex,ollirType,ollirType,secondExpression));
         }
         else{
             String tempname="temp_"+tempcount;
@@ -879,6 +889,12 @@ public class OllirVisitor extends AJmmVisitor<String,String > {
     private String dealWithNewIntArray(JmmNode jmmNode, String s) {
         StringBuilder ollir=new StringBuilder();
         String expression=visit(jmmNode.getJmmChild(0),"");
+        if(s.equals("classfield")){
+            var temp="temp_"+tempcount+".array.i32";
+            tempcount++;
+            tempList.add(String.format("%s :=.array.i32 new(array,%s).array.i32;\n",temp,expression));
+            return temp;
+        }
         ollir.append(String.format("new(array,%s)%s",expression,currentAssignmentType));
         return ollir.toString();
     }
