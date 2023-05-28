@@ -70,7 +70,6 @@ public class ConstantPropagation extends AJmmVisitor<HashMap<String, JmmNode>, S
             newLiteral.put("value", constant.get("value"));
             //replace node with the value
             replaceNode(node, newLiteral);
-            return "changed";
         }
         return "";
     }
@@ -114,10 +113,10 @@ public class ConstantPropagation extends AJmmVisitor<HashMap<String, JmmNode>, S
         }
 
         //get index of the node
-        int index = parent.getChildren().indexOf(oldNode);
+        int i = parent.getChildren().indexOf(oldNode);
 
         //replace
-        parent.setChild(newNode,index);
+        parent.setChild(newNode,i);
         hasChanged = true;
 
     }

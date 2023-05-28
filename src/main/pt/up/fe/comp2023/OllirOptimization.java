@@ -38,6 +38,9 @@ public class OllirOptimization implements JmmOptimization {
             constantFolding.visit(jmmSemanticsResult.getRootNode(),"");
         }while(constantPropagation.hasChanged() || constantFolding.hasChanged());
 
+        System.out.println("optimized");
+        System.out.println(jmmSemanticsResult.getRootNode().toTree());
+
         return jmmSemanticsResult;
 
     }
