@@ -172,7 +172,7 @@ public class JasminGenerator {
             case BINARYOPER  -> stringBuilder.append(dealWithBINARYOPER((BinaryOpInstruction) instruction, varTable)).toString();
             case NOPER -> stringBuilder.append(loadElement(((SingleOpInstruction) instruction).getSingleOperand(), varTable)).toString();
             case GOTO -> stringBuilder.append(dealWithGOTO((GotoInstruction) instruction, varTable)).toString();
-            case BRANCH-> stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable)).toString();
+            case BRANCH-> stringBuilder.append(dealWithBRANCH((CondBranchInstruction) instruction, varTable, methodLabels)).toString();
             default -> "Error";
         };
     }
@@ -189,7 +189,7 @@ public class JasminGenerator {
         return stringBuilder.toString();
     }
 
-    private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
+    private String oldDealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
 
         String stringBuilder = this.loadElement(instruction.getOperands().get(0), varTable) +
                 "ifeq " +
@@ -198,6 +198,47 @@ public class JasminGenerator {
 
         this.decrementStackCounter(1);
         return stringBuilder;
+    }
+
+    private String dealWithBRANCH(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable, HashMap<String, Instruction> methodLabels){
+        StringBuilder stringBuilder = new StringBuilder();
+        Instruction cond = instruction.getCondition();
+        String label = instruction.getLabel();
+        InstructionType type = cond.getInstType();
+
+        if(type == InstructionType.BINARYOPER) {
+            Element leftOperand = ((BinaryOpInstruction) cond).getLeftOperand();
+            Element rightOperand = ((BinaryOpInstruction) cond).getRightOperand();
+            OperationType opType = ((BinaryOpInstruction) cond).getOperation().getOpType();
+
+            if (opType == OperationType.LTH || opType == OperationType.GTE) {
+                stringBuilder.append(loadElement(leftOperand, varTable));
+                if (rightOperand.isLiteral() && ((LiteralElement) rightOperand).getLiteral().equals("0")) {
+
+                    if (opType == OperationType.LTH)
+                        stringBuilder.append("\tiflt " + label + "\n");
+                    else stringBuilder.append("\tifge " + label + "\n");
+
+                    decrementStackCounter(1);
+                } else {
+                    stringBuilder.append(loadElement(rightOperand, varTable));
+                    if(opType == OperationType.LTH)
+                        stringBuilder.append("\tif_icmplt " + label + "\n");
+                    else stringBuilder.append("\tif_icmpge " + label + "\n");
+
+                    decrementStackCounter(2);
+                }
+
+            } else {
+                decrementStackCounter(1);
+                stringBuilder.append(dealWithInstruction(cond, varTable, methodLabels) + "\tifne " + label + "\n");
+            }
+        } else {
+            decrementStackCounter(1);
+            stringBuilder.append(dealWithInstruction(cond, varTable, methodLabels) + "\tifne " + label + "\n");
+        }
+
+        return stringBuilder.toString();
     }
 
     private String dealWithGOTO(GotoInstruction instruction, HashMap<String, Descriptor> varTable) {
